@@ -202,8 +202,9 @@ their hardware hacks) are listed with a link to their folder and no wizard.
    buttons open it; the name checked as typed, Other ESP with the base's
    defaults, the protection screen from the rule. The integration page flow
    stays.
-3. **Build and flash**: steps 7 to 9, compile with the counter, OTA for an
-   existing device, the Device Builder link for a fresh ESP, waiting for the
+3. **Build and flash** (#74): steps 7 to 9, compile with the counter (by
+   itself once the config is listed), OTA for an existing device (when
+   asked), the Device Builder in a new tab for a fresh ESP, waiting for the
    device, done with the page link.
 4. **Content**: `devices/onboarding.json` in tuct/levoit with the photos and
    notes that exist, the wizard shows them. From here the screens grow by
