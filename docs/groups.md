@@ -18,9 +18,10 @@ with the page closed and after a restart.
   evenly, Sleep counting as half a speed, and the bigger jumps come first (Off
   to 4: Off, 2, 3, 4). The Everest Air counts its Turbo as speed 4, so its
   highest is Turbo unless set to 3.
-* **Letting go:** when no sensor has a value, the group is switched off or
-  deleted, or a purifier leaves it, the group sends nothing: each keeps
-  running as it is.
+* **Off:** turning the group off (its switch, its fan, the power button, or
+  *Group control* in the editor) turns its purifiers off.
+* **Letting go:** when no sensor has a value, the group is deleted, or a
+  purifier leaves it, the group sends nothing: each keeps running as it is.
 * **By hand:** if someone changes a purifier, the group leaves that one alone
   for 30 minutes.
 * **Manual:** one level for all its purifiers instead of following the sensors.

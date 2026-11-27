@@ -668,7 +668,7 @@ class LevoitGroupCard extends LevoitCardBase {
     const { rows, columns } = this._size(5);
     const layout = rows <= 1 ? "compact" : rows <= 3 ? "small" : columns >= 9 ? "large" : "medium";
     const word = v.quality ? AQI_WORDS[v.quality] : "";
-    const status = v.offline ? "Unavailable" : !v.on ? "Off · purifiers left alone" : [v.state, word].filter(Boolean).join(" · ");
+    const status = v.offline ? "Unavailable" : !v.on ? "Off · purifiers off" : [v.state, word].filter(Boolean).join(" · ");
     const short = !v.on ? v.state : [v.mode, v.level ? `L${v.level}` : null].filter(Boolean).join(" · ");
     const pmText = pm?.value != null ? `${whole(pm.value)} µg/m³` : null;
 

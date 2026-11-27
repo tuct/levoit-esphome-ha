@@ -2634,7 +2634,7 @@ class LevoitEsphomePanel extends HTMLElement {
 
   _groupReason(g) {
     const st = g.state || {};
-    if (!g.enabled) return "Group control is off · purifiers are left alone";
+    if (!g.enabled) return "Group is off · its purifiers are off";
     if (g.mode === "manual") return "All purifiers follow the speed you set";
     if ((st.level || 0) > 0) return st.reason || "";
     if (st.status === "no_sensors")
@@ -2823,7 +2823,7 @@ class LevoitEsphomePanel extends HTMLElement {
           ? `Auto · Level ${level}`
           : "Auto · not controlling";
     const sub = !on
-      ? "Group control is off · purifiers are left alone"
+      ? "Group is off · its purifiers are off"
       : manual
         ? "All purifiers follow this level"
         : level
@@ -3208,7 +3208,7 @@ class LevoitEsphomePanel extends HTMLElement {
             : ""
         }</div>`,
       )}
-      ${this._setting("Group control", "When off, the purifiers are left alone", this._edSwitch("enabled", "Group control"))}
+      ${this._setting("Group control", "When off, the group turns its purifiers off", this._edSwitch("enabled", "Group control"))}
     </div>`;
 
     // Purifiers
@@ -3495,7 +3495,7 @@ class LevoitEsphomePanel extends HTMLElement {
         const target = this._offline(m.entity_id)
           ? "Offline · skipped"
           : !d.enabled
-            ? "Left alone"
+            ? "Off"
             : level === 0 || m.speed == null
               ? "Left as it is"
               : typeof m.speed === "number"

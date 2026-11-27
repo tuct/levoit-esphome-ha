@@ -71,6 +71,7 @@ after a restart.
 - **Hands off when you take over.** Change a purifier by hand and the group
   leaves it alone for 30 minutes. With no sensor value, it lets go entirely.
 - **Manual** runs one level on every purifier in the group.
+- **Off is off.** Turning the group off turns its purifiers off.
 - **One fan entity per group**, for dashboards, voice and automations, with
   sensors for the level, the air quality, the combined PM values and the
   total CADR.
