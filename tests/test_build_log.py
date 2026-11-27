@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from custom_components.levoit_esphome.build_log import (
+    BUILD_LOG_HEAD,
     BUILD_LOG_LINES,
     BUILD_LOG_TAIL,
     STAGE_COMPILE,
@@ -261,7 +262,17 @@ def test_unknown_output() -> None:
 
 
 def test_kept_lines() -> None:
-    """The newest lines only, blank lines kept as such, the tail for the panel, a push per line."""
+    """A first build is kept whole, from its first line: the full log starts at the beginning."""
+    log = BuildLog(upload=False)
+    for i in range(1200):
+        log.add(f"[{i}/1200] Building C object")
+    assert len(log.lines) == 1200
+    assert log.lines[0] == "[0/1200] Building C object"
+    assert log.lines[-1] == "[1199/1200] Building C object"
+
+
+def test_kept_lines_long_build() -> None:
+    """The first and the newest lines, the middle counted; blank lines kept, a push per line."""
     pushes = 0
 
     def on_line() -> None:
@@ -273,8 +284,11 @@ def test_kept_lines() -> None:
         log.add(f"line {i}")
     log.add("")
     assert pushes == BUILD_LOG_LINES + 11
-    assert len(log.lines) == BUILD_LOG_LINES
-    assert log.lines[0] == "line 11"
+    assert len(log.lines) == BUILD_LOG_LINES + 1  # with the marker
+    assert log.lines[0] == "line 0"
+    assert log.lines[BUILD_LOG_HEAD - 1] == f"line {BUILD_LOG_HEAD - 1}"
+    assert log.lines[BUILD_LOG_HEAD] == "... 11 lines not kept ..."
+    assert log.lines[BUILD_LOG_HEAD + 1] == f"line {BUILD_LOG_HEAD + 11}"
     assert log.lines[-1] == ""
     assert log.summary()["tail"] == log.lines[-BUILD_LOG_TAIL:]
     assert log.reason() == f"line {BUILD_LOG_LINES + 9}"
