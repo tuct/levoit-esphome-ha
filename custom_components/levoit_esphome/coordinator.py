@@ -430,8 +430,8 @@ class LevoitEsphomeCoordinator(DataUpdateCoordinator[LevoitData]):
             self.templates = await tpl.async_fetch_templates(session)
         except (aiohttp.ClientError, TimeoutError, KeyError, TypeError, ValueError) as err:
             _LOGGER.warning("Could not read the device templates from GitHub: %s", err)
-        if self.content is not None:  # read again only once Add device used it
-            await self.async_get_content(refresh=True)
+        # Add device's content, and the photo of every device
+        await self.async_get_content(refresh=True)
 
     @property
     def heads_checked_at(self) -> datetime | None:
@@ -455,6 +455,10 @@ class LevoitEsphomeCoordinator(DataUpdateCoordinator[LevoitData]):
             except (aiohttp.ClientError, TimeoutError, ValueError) as err:
                 _LOGGER.debug("Could not read the Add device content from GitHub: %s", err)
         return self.content or {}
+
+    def photo_url(self, model: str | None) -> str | None:
+        """The product photo of a model (tuct/levoit), if there is one."""
+        return cnt.photo_for(model, self.content or {}, self.templates)
 
     async def async_get_templates(self) -> list[tpl.Template]:
         """The device templates; fetched now if not loaded yet."""
