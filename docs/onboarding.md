@@ -55,9 +55,9 @@ device already has one, so an existing device keeps updating.
 | Device | API | OTA | Secret written |
 |---|---|---|---|
 | New | new key, `<name>_api_key` | `encryption:` inheriting the API key | `<name>_api_key` |
-| Existing, Home Assistant has its key, no OTA password given | that key, `<name>_api_key` | `encryption:` inheriting it | `<name>_api_key` |
+| Existing, Home Assistant has its key, no OTA password given | that key, `<name>_api_key` | none for the first update (its firmware may predate encryption); `encryption:` inheriting the key right after that upload, like the password migration below | `<name>_api_key` |
 | Existing, an OTA password given | that key if known | `password: !secret <name>_ota_password` | both |
-| Existing, no key known, no password | none | `encryption:` cannot inherit: none; the wizard says the first update will be over USB | none |
+| Existing, no key known, no password | none | none (`encryption:` cannot inherit) | none |
 
 The rendering already refuses encryption and password together, and
 inherited encryption without an API key. New: the Device Builder has to be
@@ -185,13 +185,18 @@ their hardware hacks) are listed with a link to their folder and no wizard.
 
 ## Steps
 
-0. **Encrypted OTA first**: new configs get `encryption:`; password devices
-   migrate over two updates, the config rewritten after the first upload,
-   with the write-back on a refused upload. Tests for every row of the
-   protection table and the Device Builder version gate. Independent of the
-   wizard, so it ships on its own.
-1. **Extract**: `onboarding.py` and the WS commands, the config flow on top
-   of it, no UI change. Tests moved and extended with the protection table.
+0. **Encrypted OTA first** (#71, in 0.7.1): new configs get `encryption:`;
+   password devices migrate over two updates, the config rewritten after the
+   first upload, with the write-back on a refused upload. Tests for every row
+   of the protection table and the Device Builder version gate. Independent
+   of the wizard, so it ships on its own.
+1. **Extract** (#72): `onboarding.py` and the WS commands
+   (`levoit_esphome/onboarding/options`, `custom_defaults`, `check_name`,
+   `create`), the config flow on top of it, no UI change. Tests moved and
+   extended with the protection table. Also: a config with an API key and no
+   OTA credential migrates to `encryption:` after its first upload, and a
+   refused encrypted upload without a password secret drops the encryption
+   again.
 2. **The wizard, to the config**: steps 1 to 6 in the panel, plain screens,
    the panel's Add device button opens it. The integration page flow stays.
 3. **Build and flash**: steps 7 to 9, compile with the counter, OTA for an
