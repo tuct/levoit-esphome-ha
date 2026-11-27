@@ -206,9 +206,10 @@ their hardware hacks) are listed with a link to their folder and no wizard.
    itself once the config is listed), OTA for an existing device (when
    asked), the Device Builder in a new tab for a fresh ESP, waiting for the
    device, done with the page link.
-4. **Content**: `devices/onboarding.json` in tuct/levoit with the photos and
-   notes that exist, the wizard shows them. From here the screens grow by
-   editing that file.
+4. **Content** (tuct/levoit#185, #75): `devices/onboarding.json` in
+   tuct/levoit with the product photos and the README gallery's notes, checked
+   in its CI; the wizard shows them, and lists the devices without a template
+   with their guide. From here the screens grow by editing that file.
 5. **USB in the wizard** (optional): the firmware view and esp-web-tools,
    offered in a secure context.
 
