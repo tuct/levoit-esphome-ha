@@ -2,8 +2,10 @@
 
 Per device a photo, its status, spec and a few words, how easy it is to open
 and the routes (flash the original ESP, add an ESP, custom hardware), taken
-from the tuct/levoit README gallery. Read from main like the templates, so
-the Add device page changes with a PR there and no release here.
+from the tuct/levoit README gallery, and the component's model codes, by which
+every device of that model gets the photo (sidebar page, dashboard cards).
+Read from main like the templates, so the Add device page changes with a PR
+there and no release here.
 
 The file is optional: without it (or with entries this version does not
 understand) the page shows the line drawings and no notes. Paths become
@@ -27,6 +29,7 @@ STATUSES = ("tested", "partly_tested", "untested", "development", "planned", "cu
 OPENS = ("easy", "medium", "hard")
 ROUTES = ("flash", "add_esp", "custom")
 _ID = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+_MODEL = re.compile(r"^[A-Z0-9]+$")
 # a path in the repo, no way out of it
 _PATH = re.compile(r"^(?!/)(?!.*\.\.)[A-Za-z0-9_./-]+$")
 _PHOTO = (".jpg", ".jpeg", ".png", ".webp")
@@ -48,11 +51,13 @@ class DeviceContent:
     routes: tuple[str, ...]
     status_note: str | None = None
     spec: str | None = None
+    models: tuple[str, ...] = ()  # the component's model codes, e.g. CORE300S
 
     def as_dict(self) -> dict[str, Any]:
         """For the WebSocket answer."""
         data = asdict(self)
         data["routes"] = list(self.routes)
+        data["models"] = list(self.models)
         return data
 
 
@@ -77,6 +82,15 @@ def _guide_url(path: str) -> str:
     """A folder opens as a tree on GitHub, a file (docs/humidifiers.md) as a blob."""
     kind = "blob" if "." in path.rsplit("/", 1)[-1] else "tree"
     return f"https://github.com/{GITHUB_REPO}/{kind}/{CONTENT_REF}/{path}"
+
+
+def _models(value: Any) -> tuple[str, ...]:
+    """The model codes of an entry; none if the list is not what it should be."""
+    if not isinstance(value, list) or not all(
+        isinstance(m, str) and _MODEL.match(m) for m in value
+    ):
+        return ()
+    return tuple(dict.fromkeys(value))
 
 
 def parse_content(data: Any) -> dict[str, DeviceContent]:
@@ -119,6 +133,7 @@ def parse_content(data: Any) -> dict[str, DeviceContent]:
                 routes=tuple(dict.fromkeys(routes)),
                 status_note=_text(entry, "status_note", required=False),
                 spec=_text(entry, "spec", required=False),
+                models=_models(entry.get("models")),
             )
         except ValueError:
             continue
@@ -135,6 +150,21 @@ async def async_fetch_content(session: aiohttp.ClientSession) -> dict[str, Devic
         resp.raise_for_status()
         data = await resp.json(content_type=None)
     return parse_content(data)
+
+
+def photo_for(
+    model: str | None, content: dict[str, DeviceContent], templates: list[Any]
+) -> str | None:
+    """A model's photo: by the entry that names the model, else by its template's folder."""
+    if not model or not content:
+        return None
+    for entry in content.values():
+        if model in entry.models:
+            return entry.photo_url
+    for template in templates:
+        if template.model == model and (entry := content.get(template_folder(template.file))):
+            return entry.photo_url
+    return None
 
 
 def template_folder(template_file: str) -> str:

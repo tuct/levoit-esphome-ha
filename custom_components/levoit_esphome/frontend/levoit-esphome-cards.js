@@ -23,6 +23,8 @@ const ICONS = {
 const icon = (name, cls = "") =>
   `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name]}"></path></svg>`;
 
+// a purifier's product photo (tuct/levoit), over its icon
+const photoImg = (url) => (url ? `<img src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "");
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -103,6 +105,10 @@ ha-card { height: 100%; box-sizing: border-box; overflow: hidden; display: flex;
   align-items: center; justify-content: center; background: var(--lv-track); color: var(--secondary-text-color);
   cursor: pointer; }
 .icn.on { background: color-mix(in srgb, var(--primary-color) 18%, transparent); color: var(--primary-color); }
+/* the product photo over the icon (which shows while it loads, or without one); on: a ring */
+.icn.photo { position: relative; overflow: hidden; }
+.icn.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.icn.photo.on { box-shadow: 0 0 0 2px var(--primary-color); }
 .icn.offline { opacity: 0.5; }
 .icn.sm { width: 36px; height: 36px; } .icn.xs { width: 32px; height: 32px; } .icn.xs .i { width: 16px; height: 16px; }
 .pwr { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--divider-color); background: transparent;
@@ -345,9 +351,9 @@ class LevoitPurifierCard extends LevoitCardBase {
     const layout = rows <= 1 ? "compact" : rows <= 3 ? "small" : columns >= 9 ? "large" : "medium";
 
     const iconBtn = (cls, act, label) =>
-      `<button class="icn ${cls}${v.offline ? " offline" : v.on ? " on" : ""}" data-act="${act}" aria-label="${esc(label)}" ${
+      `<button class="icn ${cls}${p?.photo_url ? " photo" : ""}${v.offline ? " offline" : v.on ? " on" : ""}" data-act="${act}" aria-label="${esc(label)}" ${
         act === "power" ? dis : ""
-      }>${icon("purifier")}</button>`;
+      }>${icon("purifier")}${photoImg(p?.photo_url)}</button>`;
     const power = `<button class="pwr${v.on ? " on" : ""}" data-act="power" aria-pressed="${v.on}" aria-label="Power" ${dis}>${icon(
       "power",
     )}</button>`;
@@ -924,6 +930,7 @@ class LevoitListCard extends LevoitCardBase {
     return {
       id: p.entity_id,
       group: false,
+      photo: p.photo_url || null,
       sub: r.sub,
       name: p.title,
       offline: v.offline,
@@ -1014,9 +1021,9 @@ class LevoitListCard extends LevoitCardBase {
             : v.hasPm
               ? "PM2.5 —"
               : "No air sensor";
-      const who = `<span class="icn xs${v.offline ? " offline" : v.on ? " on" : ""}" aria-hidden="true">${icon(
+      const who = `<span class="icn xs${v.photo ? " photo" : ""}${v.offline ? " offline" : v.on ? " on" : ""}" aria-hidden="true">${icon(
         v.group ? "group" : "purifier",
-      )}</span>
+      )}${photoImg(v.photo)}</span>
         <div class="who" data-act="more" data-id="${esc(v.id)}"><div class="trunc nm${v.group ? " grp" : ""}">${esc(v.name)}</div>
           <div class="trunc air${v.offline ? " bad-text" : " muted"}"><span class="dot${v.quality ? ` q${v.quality}` : ""}"></span>${esc(
             air,
