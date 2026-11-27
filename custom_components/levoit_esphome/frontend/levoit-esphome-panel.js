@@ -1788,18 +1788,19 @@ class LevoitEsphomePanel extends HTMLElement {
     if (a.finished) return this._wzDone();
     const steps = this._wzSteps();
     const i = steps.indexOf(a.step);
-    const stepper = `<ol class="wz-steps">${steps
+    const stepper = `<div class="wz-progress"><ol class="wz-steps" aria-label="Steps">${steps
       .map((s, n) => {
-        const label = `${n + 1}. ${WIZARD_STEPS[s]}`;
-        const cls = n < i ? "done" : n === i ? "on" : "";
+        const label = WIZARD_STEPS[s];
+        const state = n < i ? "done" : n === i ? "on" : "todo";
+        const dot = `<span class="wz-dot">${state === "done" ? icon("check") : n + 1}</span><span class="wz-label">${label}</span>`;
         // before Create, a done step can be opened again; after it, the config exists
-        return `<li class="${cls}">${
-          n < i && !a.created
-            ? `<button data-action="wz-step" data-step="${s}">${label}</button>`
-            : `<span>${label}</span>`
+        return `<li class="${state}"${state === "on" ? ' aria-current="step"' : ""}>${
+          state === "done" && !a.created
+            ? `<button class="wz-step" data-action="wz-step" data-step="${s}" title="Back to ${label}">${dot}</button>`
+            : `<span class="wz-step">${dot}</span>`
         }</li>`;
       })
-      .join("")}</ol>`;
+      .join("")}</ol><div class="wz-now">Step ${i + 1} of ${steps.length} · ${WIZARD_STEPS[a.step]}</div></div>`;
     const screens = {
       model: () => this._wzModelScreen(),
       esp: () => this._wzEspScreen(),
@@ -5114,15 +5115,41 @@ details.section[open] > summary { padding-bottom: 8px; }
 
 /* Add device: the wizard */
 .wz { max-width: 880px; margin: 0 auto; }
-.wz-steps { display: flex; flex-wrap: wrap; gap: 4px 0; list-style: none; margin: 0 4px 12px; padding: 0;
-  font-size: 13px; color: var(--secondary-text-color); }
-.wz-steps li { display: flex; align-items: center; }
-.wz-steps li::after { content: "›"; margin: 0 10px; opacity: 0.5; }
-.wz-steps li:last-child::after { content: none; }
-.wz-steps li.on { color: var(--lv-accent-text); font-weight: 500; }
-.wz-steps li.done { color: var(--primary-text-color); }
-.wz-steps button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer;
-  text-decoration: underline dotted; }
+.wz-progress { margin: 4px 0 18px; }
+.wz-steps { display: flex; list-style: none; margin: 0; padding: 0; }
+.wz-steps li { flex: 1 1 0; min-width: 0; position: relative; display: flex; justify-content: center; }
+/* the line from the step before, between the two circles */
+.wz-steps li::before { content: ""; position: absolute; top: 13px; left: calc(-50% + 18px); right: calc(50% + 18px);
+  height: 2px; border-radius: 1px; background: var(--divider-color); }
+.wz-steps li:first-child::before { content: none; }
+.wz-steps li.done::before, .wz-steps li.on::before { background: var(--primary-color); }
+.wz-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; max-width: 100%;
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+button.wz-step { cursor: pointer; }
+.wz-dot { width: 28px; height: 28px; border-radius: 50%; box-sizing: border-box; flex: none;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500;
+  font-variant-numeric: tabular-nums; border: 2px solid var(--divider-color);
+  background: var(--card-background-color, #fff); color: var(--secondary-text-color);
+  transition: box-shadow 0.15s, filter 0.15s; }
+.wz-steps li.done .wz-dot { background: var(--primary-color); border-color: var(--primary-color);
+  color: var(--text-primary-color, #fff); }
+.wz-steps li.done .wz-dot svg { width: 16px; height: 16px; fill: currentColor; }
+.wz-steps li.on .wz-dot { border-color: var(--primary-color); color: var(--lv-accent-text);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 18%, transparent); }
+button.wz-step:hover .wz-dot { filter: brightness(1.1); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 14%, transparent); }
+button.wz-step:focus-visible { outline: none; }
+button.wz-step:focus-visible .wz-dot { box-shadow: 0 0 0 3px var(--primary-color); }
+.wz-label { font-size: 12px; color: var(--secondary-text-color); max-width: 100%; padding: 0 2px; box-sizing: border-box;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wz-steps li.done .wz-label { color: var(--primary-text-color); }
+.wz-steps li.on .wz-label { color: var(--lv-accent-text); font-weight: 500; }
+.wz-now { display: none; }
+@media (max-width: 600px) {
+  .wz-label { display: none; }
+  .wz-dot { width: 24px; height: 24px; font-size: 12px; }
+  .wz-steps li::before { top: 11px; left: calc(-50% + 14px); right: calc(50% + 14px); }
+  .wz-now { display: block; text-align: center; font-size: 13px; font-weight: 500; color: var(--lv-accent-text); margin-top: 10px; }
+}
 .wz-card { padding: 4px 0 8px; }
 .wz-head { padding: 16px 20px 8px; }
 .wz-head h2 { font-size: 18px; }
