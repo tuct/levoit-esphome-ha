@@ -362,16 +362,23 @@ class LevoitEsphomeCoordinator(DataUpdateCoordinator[LevoitData]):
         key from the Device Builder and creates the entry, as if the user had
         typed its address. A device that is not reachable (not flashed yet,
         not on the Wi-Fi) leaves nothing behind; it is tried again next time.
+
+        A device that is in the ESPHome integration already (confirmed from
+        Home Assistant's discovery, or its entities were not there at the last
+        refresh) is not added again, but the list is refreshed, so the panel's
+        Add device goes on now instead of after the next scan (5 minutes).
         """
         known = {
             entry.data.get("device_name")
             for entry in self.hass.config_entries.async_entries(ESPHOME_DOMAIN)
         }
-        added = False
+        refresh = False
         for config in pending.values():
-            if config.name not in known:
-                added |= await self._async_try_add(config)
-        if added:
+            if config.name in known:
+                refresh = True
+            else:
+                refresh |= await self._async_try_add(config)
+        if refresh:
             await self.async_request_refresh()
 
     async def _async_try_add(self, config: PendingConfig) -> bool:

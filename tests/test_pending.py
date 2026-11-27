@@ -172,3 +172,21 @@ async def test_auto_add_skips_known_names(hass: HomeAssistant) -> None:
         async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=31))
         await hass.async_block_till_done(wait_background_tasks=True)
     init.assert_not_awaited()
+
+
+@pytest.mark.usefixtures("esphome_devices", "patch_sources", "pending_builder")
+async def test_added_elsewhere_listed_at_next_look(hass: HomeAssistant) -> None:
+    """Added from Home Assistant's discovery: listed at the next look, not after the scan."""
+    init = AsyncMock()
+    with patch.object(hass.config_entries.flow, "async_init", init):
+        entry = await _setup(hass)
+        coordinator = entry.runtime_data
+        assert list(coordinator.data.pending) == ["living-room"]
+        # the user confirmed the discovered device: an ESPHome entry and its device
+        add_esphome_device(hass, "living-room", NEW_MAC, "living-room", None)
+        assert "living-room" not in coordinator.data.devices  # no refresh by itself
+        async_fire_time_changed(hass, dt_util.utcnow() + AUTO_ADD_INTERVAL)
+        await hass.async_block_till_done(wait_background_tasks=True)
+    init.assert_not_awaited()
+    assert "living-room" in coordinator.data.devices
+    assert coordinator.data.pending == {}
