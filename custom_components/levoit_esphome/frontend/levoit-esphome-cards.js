@@ -7,7 +7,7 @@
 // (its fan and sensors, its members) comes once from levoit_esphome/cards,
 // which any user may call.
 
-const DOC_URL = "https://github.com/tuct/levoit-esphome-ha#dashboard-cards";
+const DOC_URL = "https://github.com/tuct/levoit-esphome-ha/blob/main/docs/sidebar-page.md#dashboard-cards";
 
 const ICONS = {
   purifier:
