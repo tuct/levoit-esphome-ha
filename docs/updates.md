@@ -221,6 +221,10 @@ template are listed with a link to their guide. The guided page then carries on:
 
 <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-8-flash.png?v=0.8.1" width="720" alt="Flash it over USB: connect the ESP with a USB data cable, open the Device Builder, choose Install and Plug into this computer, then put the ESP back; the page looks for levoit-core300s-c3-two.local and goes on by itself">
 
+**9. Connect**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-9-online.png?v=0.8.1" width="720" alt="levoit-core300s-c3-two is online: on the network and in Home Assistant with its config, updates over the air from here on; Open the device, Updates and config, Add another device">
+
 * **New device:** a name is suggested; a new API encryption key is
   generated and stored in the Device Builder's `secrets.yaml` as
   `<name>_api_key`, and OTA updates are encrypted with it (a Device Builder
