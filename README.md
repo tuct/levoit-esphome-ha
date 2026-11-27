@@ -96,7 +96,7 @@ Updates* with its release notes.
 each step live: setup, compile with a file count, link, then the upload with
 its percentage.
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log-upload.png?v=0.7.1" width="720" alt="A build uploading: Setup, Compile with 107 files, Link and image with a 900 KB image and Result with RAM 30.3 % and Flash 50.2 % done, Upload at 74 % with its bar, and the upload's progress lines">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log-running.png?v=0.8.1" width="720" alt="A running build's log: Setup done with ESP-IDF 5.5.6, Compile at 747 of 936 files on utils.c with its bar, Link and image and Result still to come, and the build output below">
 
 ### Add a new purifier
 
