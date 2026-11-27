@@ -44,7 +44,7 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from . import templates as tpl
+from . import content as cnt, templates as tpl
 from .build_log import (
     BUILD_LOG_IN_HA_LOG,
     BUILD_PUSH_INTERVAL,
@@ -246,6 +246,8 @@ class LevoitEsphomeCoordinator(DataUpdateCoordinator[LevoitData]):
         self._heads: dict[str, ChannelHead] = {}
         self._heads_at: datetime | None = None
         self.templates: list[tpl.Template] = []
+        # Add device's photos and notes (devices/onboarding.json); None: not read yet
+        self.content: dict[str, cnt.DeviceContent] | None = None
         self._facts: dict[str, ConfigFacts] = {}
         self._facts_task: asyncio.Task[None] | None = None
         # Channel per device name, for devices without a Device Builder config;
@@ -428,6 +430,8 @@ class LevoitEsphomeCoordinator(DataUpdateCoordinator[LevoitData]):
             self.templates = await tpl.async_fetch_templates(session)
         except (aiohttp.ClientError, TimeoutError, KeyError, TypeError, ValueError) as err:
             _LOGGER.warning("Could not read the device templates from GitHub: %s", err)
+        if self.content is not None:  # read again only once Add device used it
+            await self.async_get_content(refresh=True)
 
     @property
     def heads_checked_at(self) -> datetime | None:
@@ -438,6 +442,19 @@ class LevoitEsphomeCoordinator(DataUpdateCoordinator[LevoitData]):
         """Read the latest versions from GitHub and the devices again, now."""
         self._heads_at = None
         await self.async_refresh()
+
+    async def async_get_content(self, *, refresh: bool = False) -> dict[str, cnt.DeviceContent]:
+        """Add device's photos and notes; read now if not yet (or `refresh`).
+
+        Optional: when GitHub does not answer, Add device goes on without them
+        (and the last ones read are kept).
+        """
+        if self.content is None or refresh:
+            try:
+                self.content = await cnt.async_fetch_content(async_get_clientsession(self.hass))
+            except (aiohttp.ClientError, TimeoutError, ValueError) as err:
+                _LOGGER.debug("Could not read the Add device content from GitHub: %s", err)
+        return self.content or {}
 
     async def async_get_templates(self) -> list[tpl.Template]:
         """The device templates; fetched now if not loaded yet."""

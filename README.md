@@ -474,7 +474,11 @@ without one) does the same as a guided page, one screen per step: the model,
 the ESP, a new device or one Home Assistant knows, name and channel, what
 gets written (keys, OTA protection, the Wi-Fi secrets, the config), then
 Create. The name is checked against the Device Builder as you type. Both
-routes make the same config. The guided page then carries on:
+routes make the same config. Each model shows its photo, status, spec and
+how easy it is to open, from tuct/levoit's
+[`devices/onboarding.json`](https://github.com/tuct/levoit/blob/main/devices/onboarding.json)
+(read from GitHub, so it grows without an update here); devices without a
+template are listed with a link to their guide. The guided page then carries on:
 
 * **New device:** it compiles the config right away, with the build's steps
   live, so a problem shows before the flash; then it says how to flash it

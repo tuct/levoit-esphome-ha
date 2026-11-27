@@ -1,8 +1,10 @@
 """WebSocket commands for Add device from the sidebar panel (admins only).
 
-* levoit_esphome/onboarding/options: the models and their ESPs, the devices
-  Home Assistant knows without a config, channels, boards, what the Device
-  Builder supports and which Wi-Fi secrets are missing
+* levoit_esphome/onboarding/options: the models and their ESPs (with their
+  photo and notes from devices/onboarding.json), the devices of tuct/levoit
+  without a template, the devices Home Assistant knows without a config,
+  channels, boards, what the Device Builder supports and which Wi-Fi secrets
+  are missing
 * levoit_esphome/onboarding/custom_defaults: board and UART pins of a model's
   template, to start a custom config (Other ESP) from
 * levoit_esphome/onboarding/check_name: whether a name can be used, and a
@@ -27,7 +29,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from . import onboarding as onb, templates as tpl
+from . import content as cnt, onboarding as onb, templates as tpl
 from .const import DOMAIN
 from .device_builder import DeviceBuilderCommandError, async_secret_names, builder_page_url
 from .onboarding import OnboardingError
@@ -76,6 +78,16 @@ async def _context(
     return coordinator, builder, templates
 
 
+def _content_of(
+    content: dict[str, cnt.DeviceContent], variants: list[tpl.Template]
+) -> dict[str, Any] | None:
+    """A model's photo and notes, by the device folder of its templates."""
+    for template in variants:
+        if found := content.get(cnt.template_folder(template.file)):
+            return found.as_dict()
+    return None
+
+
 def _template_dict(template: tpl.Template) -> dict[str, Any]:
     return {
         "variant": template.variant,
@@ -96,6 +108,8 @@ async def ws_options(
     if (found := await _context(hass, connection, msg)) is None:
         return
     coordinator, builder, templates = found
+    content = await coordinator.async_get_content()
+    with_template = {cnt.template_folder(t.file) for t in templates}
     try:
         state = await onb.async_builder_state(hass, builder, coordinator)
         present = await async_secret_names(hass, builder)
@@ -114,9 +128,12 @@ async def ws_options(
                     "title": title,
                     "variants": [_template_dict(t) for t in onb.variants(templates, model)],
                     "custom_base": onb.custom_base(onb.variants(templates, model)).file,
+                    "content": _content_of(content, onb.variants(templates, model)),
                 }
                 for model, title in onb.models(templates)
             ],
+            # devices of tuct/levoit without a template: their guide, no config
+            "others": [c.as_dict() for c in content.values() if c.id not in with_template],
             "existing": [
                 {
                     "name": d.name,

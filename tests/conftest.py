@@ -16,6 +16,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.levoit_esphome.content import parse_content
 from custom_components.levoit_esphome.device_builder import DeviceBuilderCommandError
 from custom_components.levoit_esphome.templates import Template
 from custom_components.levoit_esphome.versions import ChannelHead
@@ -94,6 +95,46 @@ CORE300S_S3 = Template(
 )
 TEMPLATES = [CORE300S, CORE300S_S3, EVEREST_ORIGINAL, EVEREST_C3]
 CUSTOM_CONFIG = "esphome:\n  name: bedroom-purifier\n"
+# devices/onboarding.json: two devices with a template, one without
+CONTENT_JSON = {
+    "version": 1,
+    "devices": [
+        {
+            "id": "levoit-core300s",
+            "title": "Core 300S",
+            "photo": "docs/images/devices/levoit-core300s.jpg",
+            "guide": "devices/levoit-core300s",
+            "status": "tested",
+            "spec": "214 m³/h",
+            "summary": "PM2.5 and Auto mode",
+            "open": "easy",
+            "routes": ["flash", "add_esp"],
+        },
+        {
+            "id": "levoit-everest-air",
+            "title": "Everest Air",
+            "photo": "docs/images/devices/levoit-everest-air.jpg",
+            "guide": "devices/levoit-everest-air",
+            "status": "tested",
+            "spec": "612 m³/h",
+            "summary": "Vent louver, PM1.0/2.5/10, Turbo",
+            "open": "easy",
+            "routes": ["flash", "add_esp"],
+        },
+        {
+            "id": "levoit-mini",
+            "title": "Levoit Mini",
+            "photo": "docs/images/devices/levoit-mini.jpg",
+            "guide": "devices/levoit-mini",
+            "status": "custom",
+            "status_note": "Guide + YAML",
+            "summary": "Custom PCB and 3D parts, reversible",
+            "open": "easy",
+            "routes": ["custom"],
+        },
+    ],
+}
+CONTENT = parse_content(CONTENT_JSON)
 WIFI = {"wifi_ssid": "home", "wifi_password": "wifi-pw", "wifi_ap_password": "ap-pw"}
 
 
@@ -211,6 +252,10 @@ def patch_sources(builder: FakeBuilder) -> Generator[AsyncMock]:
         patch(
             "custom_components.levoit_esphome.templates.async_fetch_template_text",
             AsyncMock(return_value=BUILDER_TEXT),
+        ),
+        patch(
+            "custom_components.levoit_esphome.content.async_fetch_content",
+            AsyncMock(return_value=CONTENT),
         ),
         patch(
             "custom_components.levoit_esphome.coordinator.async_get_device_builder",

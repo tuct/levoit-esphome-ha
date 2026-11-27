@@ -43,6 +43,26 @@ const WIZARD_STEPS = {
   install: "Install",
 };
 const DEVICES_URL = "https://github.com/tuct/levoit/tree/main/devices/";
+// Add device's notes per device (devices/onboarding.json of tuct/levoit)
+const STATUS_LABELS = {
+  tested: "Tested",
+  partly_tested: "Partly tested",
+  untested: "Untested",
+  development: "In development",
+  planned: "Planned",
+  custom: "Custom hardware",
+};
+const STATUS_CHIPS = { tested: "success", partly_tested: "warning", untested: "warning", development: "warning" };
+const OPEN_LABELS = { easy: "Easy to open", medium: "Medium to open", hard: "Hard to open" };
+const ROUTE_LABELS = { flash: "Flash the original ESP", add_esp: "Add an ESP", custom: "Custom hardware" };
+// "Flash the original ESP or add an ESP"
+const routesText = (routes) =>
+  (routes || [])
+    .map((r, i) => {
+      const label = ROUTE_LABELS[r] || r;
+      return i ? label.charAt(0).toLowerCase() + label.slice(1) : label;
+    })
+    .join(" or ");
 const CHANNEL_LABELS = {
   stable: "Stable",
   main: "Main",
@@ -1816,9 +1836,32 @@ class LevoitEsphomePanel extends HTMLElement {
     return `<button class="wz-opt${on ? " on" : ""}" data-action="${action}" ${data} aria-pressed="${on}" ${
       disabled ? "disabled" : ""
     }>
-      <span class="dev-tile">${tile}</span>
+      ${tile}
       <span class="wz-opt-text"><span class="wz-opt-name">${name}</span><span class="hint">${hint}</span></span>
     </button>`;
+  }
+
+  _wzTile(inner) {
+    return `<span class="dev-tile">${inner}</span>`;
+  }
+
+  // the product photo from tuct/levoit over the line drawing: while it loads,
+  // or when GitHub cannot be reached, the drawing shows
+  _wzPhoto(model, content, size = "") {
+    const img = content?.photo_url
+      ? `<img src="${esc(content.photo_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+      : "";
+    return `<span class="dev-tile photo${size ? ` ${size}` : ""}">${deviceImage(model)}${img}</span>`;
+  }
+
+  // status, spec, how easy it is to open, the routes: as the tuct/levoit gallery has them
+  _wzNotes(c, { routes = true } = {}) {
+    if (!c) return "";
+    const status = `<span class="chip ${STATUS_CHIPS[c.status] || ""}">${esc(c.status_note || STATUS_LABELS[c.status] || c.status)}</span>`;
+    const facts = [c.spec, OPEN_LABELS[c.open]].filter(Boolean).map(esc).join(" · ");
+    const how = routes ? routesText(c.routes) : "";
+    return `<span class="wz-notes">${status}${facts ? `<span>${facts}</span>` : ""}</span>
+      <span class="wz-summary">${esc(c.summary)}</span>${how ? `<span class="hint">${esc(how)}</span>` : ""}`;
   }
 
   _wzModelScreen() {
@@ -1829,16 +1872,33 @@ class LevoitEsphomePanel extends HTMLElement {
           "wz-model",
           `data-model="${esc(m.model)}"`,
           m.model === a.model,
-          deviceImage(m.model),
+          this._wzPhoto(m.model, m.content),
           esc(m.title),
-          `${esc(m.model)} · ${esc(m.variants.map((v) => v.title).join(", "))}`,
+          m.content
+            ? `${this._wzNotes(m.content, { routes: false })}<span class="hint">ESP: ${esc(m.variants.map((v) => v.title).join(", "))}</span>`
+            : `${esc(m.model)} · ${esc(m.variants.map((v) => v.title).join(", "))}`,
         ),
+      )
+      .join("");
+    const others = (a.options.others || [])
+      .map(
+        (c) => `<a class="wz-opt other" href="${esc(c.guide_url)}" target="_blank" rel="noreferrer">
+          ${this._wzPhoto(null, c, "sm")}
+          <span class="wz-opt-text"><span class="wz-opt-name">${esc(c.title)}</span>${this._wzNotes(c)}</span>
+          <span class="wz-open">${icon("open")}</span>
+        </a>`,
       )
       .join("");
     return `${this._wzHead(
       "Which purifier?",
-      `The models with a template in tuct/levoit. Others (with their own hardware notes) are in the <a href="${DEVICES_URL}" target="_blank" rel="noreferrer">device folders</a>.`,
-    )}<div class="wz-grid">${cards}</div>`;
+      `The models with a template in tuct/levoit: Add device makes their config. Photos and notes from the <a href="https://github.com/tuct/levoit#readme" target="_blank" rel="noreferrer">tuct/levoit</a> gallery.`,
+    )}<div class="wz-grid models">${cards}</div>${
+      others
+        ? `<div class="wz-others"><h3>Not in Add device (yet)</h3>
+          <p class="hint">These have a guide and YAML in tuct/levoit, but no template a config can be made from here. The guide opens in a new tab.</p>
+          <div class="wz-grid">${others}</div></div>`
+        : ""
+    }`;
   }
 
   _wzEspScreen() {
@@ -1852,7 +1912,7 @@ class LevoitEsphomePanel extends HTMLElement {
             "wz-variant",
             `data-file="${esc(v.file)}"`,
             a.variant === v.file,
-            icon("memory"),
+            this._wzTile(icon("memory")),
             esc(v.title),
             `Board ${esc(v.board)} · a template config: follows tuct/levoit`,
           ),
@@ -1862,7 +1922,7 @@ class LevoitEsphomePanel extends HTMLElement {
         "wz-variant",
         `data-file="custom"`,
         a.variant === "custom",
-        icon("pencil"),
+        this._wzTile(icon("pencil")),
         "Other ESP",
         "Your own board and UART pins · a custom config: never rewritten",
       );
@@ -1894,10 +1954,15 @@ class LevoitEsphomePanel extends HTMLElement {
           </div></div>`;
       }
     }
-    return `${this._wzHead(
+    const routes = m.content?.routes?.length
+      ? ` For this one: ${esc(routesText(m.content.routes).replace(/^./, (c) => c.toLowerCase()))}; the <a href="${esc(
+          m.content.guide_url,
+        )}" target="_blank" rel="noreferrer">guide</a> shows how.`
+      : "";
+    return `<div class="wz-head-photo">${this._wzPhoto(m.model, m.content, "lg")}${this._wzHead(
       `${esc(m.title)}: which ESP?`,
-      "A template config follows tuct/levoit: every update rewrites it from the newest template, keeping name, secrets and channel. Other ESP makes a config of your own for a board or pins without a template.",
-    )}<div class="wz-grid">${cards}</div>${custom}`;
+      `A template config follows tuct/levoit: every update rewrites it from the newest template, keeping name, secrets and channel. Other ESP makes a config of your own for a board or pins without a template.${routes}`,
+    )}</div><div class="wz-grid">${cards}</div>${custom}`;
   }
 
   _wzDeviceScreen() {
@@ -1908,7 +1973,7 @@ class LevoitEsphomePanel extends HTMLElement {
         "wz-device",
         'data-name=""',
         a.existing === null,
-        icon("plus"),
+        this._wzTile(icon("plus")),
         "New device",
         "A new name and new keys. Flashed once over USB, then updated over the air.",
       ) +
@@ -1924,7 +1989,9 @@ class LevoitEsphomePanel extends HTMLElement {
             "wz-device",
             `data-name="${esc(d.name)}"`,
             a.existing === d.name,
-            deviceImage(d.model || m.model),
+            other
+              ? this._wzTile(deviceImage(d.model))
+              : this._wzPhoto(m.model, m.content),
             esc(d.title),
             `${esc(d.name)} · ${hint}`,
             other,
@@ -2175,7 +2242,12 @@ class LevoitEsphomePanel extends HTMLElement {
       : `<p>${esc(c.name)} is on the network and in Home Assistant, with <code>${esc(
           c.configuration,
         )}</code>. Updates come over the air from here on.</p>`;
-    return `<div class="card empty wz-done"><div class="big-icon ok">${icon("check")}</div>
+    const m = this._wzModel();
+    return `<div class="card empty wz-done"><div class="wz-done-photo">${this._wzPhoto(
+      m?.model,
+      m?.content,
+      "xl",
+    )}<span class="wz-done-check">${icon("check")}</span></div>
       <h2>${c.existing ? `${esc(c.name)} installed` : `${esc(c.name)} is online`}</h2>${text}
       <div class="wz-nav center">
         <button class="btn primary" data-action="navigate" data-path="${esc(path)}">Open the device</button>
@@ -5101,6 +5173,33 @@ details.section[open] > summary { padding-bottom: 8px; }
 .wz-howto a { color: var(--lv-accent-text); }
 .wz-pad { padding: 0; }
 .wz-done h2 { margin: 12px 0 4px; }
+.dev-tile.photo { position: relative; overflow: hidden; width: 72px; height: 72px; border-radius: 12px; }
+.dev-tile.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dev-tile.photo.sm { width: 56px; height: 56px; }
+.dev-tile.photo.lg { width: 88px; height: 88px; }
+.dev-tile.photo.xl { width: 120px; height: 120px; border-radius: 16px; }
+.dev-tile.photo .dev-img { width: 60%; height: 60%; }
+.wz-grid.models .wz-opt { align-items: flex-start; }
+.wz-notes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 4px;
+  font-size: 12px; color: var(--secondary-text-color); }
+.wz-notes .chip { padding: 1px 8px; }
+.wz-summary { display: block; font-size: 13px; margin-top: 4px; line-height: 1.35; color: var(--primary-text-color); }
+.wz-opt-text > .hint { display: flex; flex-direction: column; }
+.wz-opt-text .hint .hint { margin-top: 4px; }
+.wz-others { border-top: 1px solid var(--divider-color); margin-top: 8px; padding-top: 4px; }
+.wz-others h3 { margin: 12px 20px 0; font-size: 14px; font-weight: 500; }
+.wz-others > .hint { margin: 4px 20px 0; }
+.wz-opt.other { text-decoration: none; align-items: flex-start; }
+.wz-opt.other .wz-opt-text { flex: 1; }
+.wz-open svg { width: 18px; height: 18px; fill: var(--secondary-text-color); }
+.wz-head-photo { display: flex; align-items: flex-start; gap: 4px; padding-left: 20px; }
+.wz-head-photo .dev-tile { margin-top: 16px; }
+.wz-head-photo .wz-head { flex: 1; min-width: 0; }
+.wz-done-photo { position: relative; display: inline-block; }
+.wz-done-check { position: absolute; right: -8px; bottom: -8px; width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--success-color, #43a047);
+  box-shadow: 0 0 0 3px var(--card-background-color, #fff); }
+.wz-done-check svg { width: 22px; height: 22px; fill: #fff; }
 .wz-done p { text-align: left; line-height: 1.45; }
 .big-icon.ok svg { color: var(--success-color, #43a047); }
 @media (max-width: 600px) {

@@ -196,6 +196,15 @@ async def test_options(
     assert options["ota_encryption"] is True
     assert options["missing_secrets"] == []
     assert options["builder_url"] == "/app/5c53de3b_esphome"
+    # photos and notes by the templates' device folder; the rest as others
+    raw = "https://raw.githubusercontent.com/tuct/levoit/main"
+    assert everest["content"]["photo_url"] == f"{raw}/docs/images/devices/levoit-everest-air.jpg"
+    assert everest["content"]["summary"] == "Vent louver, PM1.0/2.5/10, Turbo"
+    assert options["models"][0]["content"]["title"] == "Core 300S"
+    assert [o["id"] for o in options["others"]] == ["levoit-mini"]
+    assert options["others"][0]["guide_url"] == (
+        "https://github.com/tuct/levoit/tree/main/devices/levoit-mini"
+    )
 
     del builder.files.secrets["wifi_password"]
     for device in builder.api.configured:
