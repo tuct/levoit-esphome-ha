@@ -10,7 +10,8 @@ integration, reload the browser once to get the new page.
 
 Every purifier as a card, for using them. A line on top counts the purifiers
 running, off and offline, and names the one with the worst air. Each card has a
-small outline of the model, an air quality dot, power, the mode and the speed,
+small photo of the model (from tuct/levoit; an outline drawing while it loads
+or where there is none), an air quality dot, power, the mode and the speed,
 PM2.5, AQI (the level 1–4 and its word, *1 Very good* to *4 Poor*) and the
 current CADR, the filter left, and the time left when a timer runs. Chips under
 the model show an update that is out and the purifier's group (tinted while

@@ -12,12 +12,13 @@ from custom_components.levoit_esphome.content import (
     DeviceContent,
     async_fetch_content,
     parse_content,
+    photo_for,
     template_folder,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .conftest import CONTENT_JSON
+from .conftest import CONTENT_JSON, CORE300S, EVEREST_C3, TEMPLATES
 
 URL = f"{GITHUB_RAW}/main/{CONTENT_FILE}"
 RAW = "https://raw.githubusercontent.com/tuct/levoit/main"
@@ -106,3 +107,24 @@ async def test_fetch(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -
     aioclient_mock.clear_requests()
     aioclient_mock.get(URL, status=404)
     assert await async_fetch_content(async_get_clientsession(hass)) == {}
+
+
+def test_photo_for() -> None:
+    """By the entry that names the model; else by its template's folder; else none."""
+    data = copy.deepcopy(CONTENT_JSON)
+    data["devices"][2]["models"] = ["MINI", "MINI", "bad"]  # a bad code drops the list
+    data["devices"][1]["models"] = ["EVERESTAIR", "SPROUT"]
+    content = parse_content(data)
+    assert content["levoit-mini"].models == ()
+    assert content["levoit-everest-air"].models == ("EVERESTAIR", "SPROUT")
+    assert content["levoit-everest-air"].as_dict()["models"] == ["EVERESTAIR", "SPROUT"]
+    everest = f"{RAW}/docs/images/devices/levoit-everest-air.jpg"
+    assert photo_for("SPROUT", content, TEMPLATES) == everest  # named, no template
+    assert photo_for(EVEREST_C3.model, content, TEMPLATES) == everest
+    # not named anywhere: the folder of its template
+    assert photo_for(CORE300S.model, content, TEMPLATES) == (
+        f"{RAW}/docs/images/devices/levoit-core300s.jpg"
+    )
+    assert photo_for("VITAL100S", content, TEMPLATES) is None
+    assert photo_for(None, content, TEMPLATES) is None
+    assert photo_for("CORE300S", {}, TEMPLATES) is None

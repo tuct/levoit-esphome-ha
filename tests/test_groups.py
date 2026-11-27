@@ -358,6 +358,8 @@ async def test_panel_commands(hass: HomeAssistant, hass_ws_client: WebSocketGene
         {"entity_id": "sensor.bedroom_pm25", "type": "pm25"}
     ]
     assert event["purifiers"][0]["sleep"] is True
+    # the Core 300S's photo, by its template's folder
+    assert event["purifiers"][0]["photo_url"].endswith("/docs/images/devices/levoit-core300s.jpg")
 
     msg = await _call(
         client,
@@ -883,6 +885,7 @@ async def test_cards_for_any_user(
     assert bedroom["entity_id"] == "fan.bedroom"
     assert bedroom["pm25"] == "sensor.bedroom_pm25"
     assert bedroom["group_id"] == group["id"]
+    assert bedroom["photo_url"].endswith("/docs/images/devices/levoit-core300s.jpg")
     (listed,) = msg["result"]["groups"]
     assert listed["members"] == MEMBERS
     assert listed["entities"]["fan"] == GROUP_FAN

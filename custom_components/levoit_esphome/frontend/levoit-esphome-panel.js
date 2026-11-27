@@ -129,6 +129,13 @@ const deviceShape = (model) => {
 };
 const deviceImage = (model) =>
   `<svg class="dev-img" viewBox="0 0 48 48" aria-hidden="true">${DEVICE_SHAPES[deviceShape(model)]}</svg>`;
+// The product photo of tuct/levoit over the drawing: the drawing shows while
+// the photo loads, when GitHub cannot be reached, and for a model without one.
+// size: "" (the place's own), sm, md, lg or xl
+const deviceTile = (model, photoUrl, size = "") =>
+  `<span class="dev-tile${photoUrl ? " photo" : ""}${size ? ` ${size}` : ""}">${deviceImage(model)}${
+    photoUrl ? `<img src="${esc(photoUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""
+  }</span>`;
 
 // "2h 30 min", "45 min", "1h 5 min 10 s" -> seconds; anything else -> 0
 const parseDuration = (text) => {
@@ -1874,11 +1881,8 @@ class LevoitEsphomePanel extends HTMLElement {
 
   // the product photo from tuct/levoit over the line drawing: while it loads,
   // or when GitHub cannot be reached, the drawing shows
-  _wzPhoto(model, content, size = "") {
-    const img = content?.photo_url
-      ? `<img src="${esc(content.photo_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
-      : "";
-    return `<span class="dev-tile photo${size ? ` ${size}` : ""}">${deviceImage(model)}${img}</span>`;
+  _wzPhoto(model, content, size = "md") {
+    return deviceTile(model, content?.photo_url, size);
   }
 
   // status, spec, how easy it is to open, the routes: as the tuct/levoit gallery has them
@@ -2443,7 +2447,7 @@ class LevoitEsphomePanel extends HTMLElement {
       path,
     )}" aria-label="${esc(d.title)}: open its page">
       <div class="dc-top">
-        <span class="dev-tile">${deviceImage(d.model)}</span>
+        ${deviceTile(d.model, d.photo_url)}
         <div class="dc-name">
           <div class="name">${esc(d.title)}</div>
           <div class="dc-sub"><span>${esc(d.model || "Levoit")}</span>${filter ? `<span aria-hidden="true">·</span>${filter}` : ""}</div>${
@@ -2907,7 +2911,7 @@ class LevoitEsphomePanel extends HTMLElement {
             )}">${esc(name)}</a>`
           : `<span class="gd-name">${esc(name)}</span>`;
         return `<div class="gd-row">
-          <span class="dev-tile">${deviceImage(p?.model)}</span>
+          ${deviceTile(p?.model, p?.photo_url)}
           <div class="gd-who">${link}<div class="gd-meta"><span class="pill ${pill}"><i></i>${esc(
             this._memberState(m, member),
           )}</span><span class="hint">${esc(p?.model || "")}</span></div></div>
@@ -3223,7 +3227,7 @@ class LevoitEsphomePanel extends HTMLElement {
           <input type="checkbox" data-member="${esc(p.entity_id)}" ${chosen.has(p.entity_id) ? "checked" : ""} ${
             other ? "disabled" : ""
           } aria-label="${esc(p.title)}">
-          <span class="dev-tile">${deviceImage(p.model)}</span>
+          ${deviceTile(p.model, p.photo_url)}
           <span class="mem-text"><span class="mem-name">${esc(p.title)}</span><span class="hint">${esc(sub)}</span></span>
           <span class="tags">${tags
             .filter(([, label]) => label)
@@ -3809,7 +3813,8 @@ class LevoitEsphomePanel extends HTMLElement {
       // the speed buttons look pressed in Manual only; in Auto or Sleep they show
       // the speed it picked, dimmed (a click switches to Manual)
       const manual = on && (!a.preset_mode || a.preset_mode === "Manual");
-      controls = `<div class="hero-controls">
+      const photo = this._device(this._pageName)?.photo_url;
+      controls = `<div class="hero-controls">${photo ? deviceTile(this._page.model, photo, "hero-photo") : ""}
         <button class="power${on ? " on" : ""}" aria-label="${on ? "Turn off" : "Turn on"}" title="${
           on ? "Turn off" : "Turn on"
         }" ${usable || fan.state === "off" ? "" : "disabled"} ${this._svc(
@@ -5243,12 +5248,16 @@ button.wz-step:focus-visible .wz-dot { box-shadow: 0 0 0 3px var(--primary-color
 .wz-howto a { color: var(--lv-accent-text); }
 .wz-pad { padding: 0; }
 .wz-done h2 { margin: 12px 0 4px; }
-.dev-tile.photo { position: relative; overflow: hidden; width: 72px; height: 72px; border-radius: 12px; }
+.dev-tile.photo { position: relative; overflow: hidden; }
 .dev-tile.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.dev-tile.photo.sm { width: 56px; height: 56px; }
-.dev-tile.photo.lg { width: 88px; height: 88px; }
-.dev-tile.photo.xl { width: 120px; height: 120px; border-radius: 16px; }
-.dev-tile.photo .dev-img { width: 60%; height: 60%; }
+.dev-tile.photo .dev-img, .dev-tile.md .dev-img, .dev-tile.lg .dev-img, .dev-tile.xl .dev-img { width: 60%; height: 60%; }
+.dev-tile.sm { width: 56px; height: 56px; }
+.dev-tile.md { width: 72px; height: 72px; }
+.dev-tile.lg { width: 88px; height: 88px; }
+.dev-tile.xl { width: 120px; height: 120px; border-radius: 16px; }
+/* on: a ring in the theme colour, the photo covers the tile's own tint */
+.dcard.on .dev-tile.photo { box-shadow: 0 0 0 2px var(--primary-color); }
+.dev-tile.hero-photo { width: 72px; height: 72px; border-radius: 14px; }
 .wz-grid.models .wz-opt { align-items: flex-start; }
 .wz-notes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 4px;
   font-size: 12px; color: var(--secondary-text-color); }
