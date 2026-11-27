@@ -27,7 +27,7 @@ AQI and CADR, an air quality dot, and the filter and timer left. A line on top
 counts the purifiers running, off and offline, and names the one with the worst air.
 [More](docs/sidebar-page.md#devices-tab)
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/overview.png?v=0.6.8" width="720" alt="The sidebar page: purifiers as cards, each with power, mode and speed, PM2.5, AQI and CADR">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/overview.png?v=0.8.1" width="720" alt="The sidebar page: purifiers as cards, each with power, mode and speed, PM2.5, AQI and CADR">
 
 ### A page per purifier
 
@@ -36,7 +36,7 @@ over 12 hours to 30 days in one chart, and all the settings grouped:
 automatic, sleep, timer, display, filter.
 [More](docs/sidebar-page.md#device-page)
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/device-page.png?v=0.6.8" width="720" alt="A purifier's page: power, mode and speed, PM2.5, AQI and CADR, the 24 hour history and the settings">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/device-page.png?v=0.8.1" width="720" alt="A purifier's page: power, mode and speed, PM2.5, AQI and CADR, the 24 hour history and the settings">
 
 ### Dashboard cards
 
@@ -46,15 +46,15 @@ themselves, with no resource to add.
 
 **Purifier card:** one purifier in four sizes, from large to compact.
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-purifier.png?v=0.6.8" width="720" alt="The purifier card in its sizes: large with PM2.5, AQI, CADR, speeds and mode; medium; small with the speeds; compact with the state only">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-purifier.png?v=0.8.1" width="720" alt="The purifier card in its sizes: large with PM2.5, AQI, CADR, speeds and mode; medium; small with the speeds; compact with the state only">
 
 **Group card:** a group with its level, its combined PM2.5 and AQI, the total CADR and a chip per purifier, in four sizes.
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-group.png?v=0.6.8" width="720" alt="The group card in its sizes: large with the level bars, PM2.5, AQI index, CADR, its purifiers, Auto or Manual and the levels; medium; small with Auto and the levels in one row; compact">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-group.png?v=0.8.1" width="720" alt="The group card in its sizes: large with the level bars, PM2.5, AQI index, CADR, its purifiers, Auto or Manual and the levels; medium; small with Auto and the levels in one row; compact">
 
 **List card:** a row per group and purifier, the purifiers under their group, with PM2.5, mode, speed or level and power.
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-list.png?v=0.6.8" width="720" alt="The list card: a group with its two purifiers under it, then the other purifiers, each with PM2.5, mode, speed or level and power">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-list.png?v=0.8.1" width="720" alt="The list card: a group with its two purifiers under it, then the other purifiers, each with PM2.5, mode, speed or level and power">
 
 ### Air purifier groups
 
@@ -78,9 +78,9 @@ after a restart.
 
 [More](docs/groups.md)
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/groups.png?v=0.6.8" width="720" alt="Purifier groups: each group with its level, reason, sensors and purifiers">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/groups.png?v=0.8.1" width="720" alt="Purifier groups: each group with its level, reason, sensors and purifiers">
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/group-page.png?v=0.6.8" width="720" alt="A group's page: power, Auto or Manual and level 1 to 4, tiles for PM2.5, AQI index and CADR, the history with the level as a band, and its purifiers">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/group-page.png?v=0.8.1" width="720" alt="A group's page: power, Auto or Manual and level 1 to 4, tiles for PM2.5, AQI index and CADR, the history with the level as a band, and its purifiers">
 
 ### Firmware updates
 
@@ -90,7 +90,7 @@ channel has a newer component version, an update shows up under *Settings →
 Updates* with its release notes.
 [More](docs/updates.md)
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/panel-updates.png?v=0.6.8" width="720" alt="Updates and config: every device with its channel, installed and latest version, and Compile and Update">
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/panel-updates.png?v=0.8.1" width="720" alt="Updates and config: every device with its channel, installed and latest version, and Compile and Update">
 
 *Install* compiles the config and uploads it over the air. You can follow
 each step live: setup, compile with a file count, link, then the upload with
