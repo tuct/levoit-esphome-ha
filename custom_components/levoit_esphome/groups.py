@@ -346,7 +346,7 @@ class GroupManager:
         dev_reg = dr.async_get(self.hass)
         fans: dict[str, LevoitFan] = {}
         for device in data.devices.values() if data else ():
-            if "philips" in device.components:
+            if "philips" in device.components or device.model == "LV600S":
                 continue
             controls = match_controls(
                 self.hass, device.esphome_device_id, device.model, device.control_names

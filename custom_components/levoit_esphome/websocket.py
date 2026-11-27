@@ -32,7 +32,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 
 from .const import CHANNEL_MAIN, CHANNEL_STABLE, DOMAIN, SIGNAL_COORDINATOR
-from .controls import match_controls, page_supported
+from .controls import lv600s_stores_target, match_controls, page_supported
 from .device_builder import builder_page_url
 from .groups_websocket import async_register as async_register_groups
 from .templates import VARIANT_CUSTOM
@@ -397,6 +397,10 @@ def ws_device_controls(
             "device_id": device.esphome_device_id,
             "supported": supported,
             "from_config": bool(device.control_names),
+            "target_humidity_preset": device.model == "LV600S"
+            and lv600s_stores_target(
+                hass, controls.get("number.humidity_target"), device.control_names
+            ),
             "controls": controls,
         },
     )

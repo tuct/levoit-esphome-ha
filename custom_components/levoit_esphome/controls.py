@@ -22,6 +22,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
@@ -34,6 +35,7 @@ SUPPORTED_MODELS = frozenset(
         "CORE300S",
         "CORE400S",
         "CORE600S",
+        "LV600S",
         "VITAL100S",
         "VITAL200S",
         "EVERESTAIR",
@@ -115,8 +117,29 @@ DEFAULT_NAMES: dict[str, tuple[str, ...]] = {
     "text_sensor.model": ("Model",),
 }
 
+_LV_TARGET_PRESET = "number.humidity_target_preset"
+_LV_TARGET_NAME = "Target Humidity Preset"
+
 # Where a model names an entity differently; tried before DEFAULT_NAMES.
 MODEL_NAMES: dict[str, dict[str, tuple[str, ...]]] = {
+    "LV600S": {
+        "fan.fan": ("Humidifier", "LV600S Fan"),
+        "text_sensor.reported_mode": ("Operating Mode Status",),
+        "number.humidity_target": (_LV_TARGET_NAME, "Target Humidity"),
+        "sensor.mist_level": ("Mist Level",),
+        "number.timer": ("Timer (min)",),
+        "number.warm_level": ("Warm Level",),
+        "sensor.humidity": ("Humidity",),
+        "sensor.temperature": ("Temperature",),
+        "text_sensor.timer_duration_remaining": ("Timer Remaining", "Timer Remaining Seconds"),
+        "text_sensor.timer_duration_initial": ("Timer Duration",),
+        "binary_sensor.water_tank_empty": ("Water Tank Empty",),
+        "binary_sensor.tank_removed": ("Tank Removed",),
+        "binary_sensor.humidifying": ("Humidifying",),
+        "binary_sensor.heating_enabled": ("Heating Enabled",),
+        "binary_sensor.mcu_connection": ("MCU Connection",),
+        "binary_sensor.mcu_fault": ("MCU Fault",),
+    },
     # The Eleva's "AQI" is the 0-500 index; its 1-4 level is "Air Quality Level".
     "ELEVA300X": {
         "sensor.aqi_index": ("AQI",),
@@ -133,13 +156,15 @@ def page_supported(
     A known model decides; a device that does not report its model counts when
     it runs the levoit component and has its fan entity.
     """
+    if model == "LV600S":
+        return "fan.fan" in controls
     if model is not None:
         return model in SUPPORTED_MODELS
     return "philips" not in components and "fan.fan" in controls
 
 
 def config_names(config: Mapping[str, Any]) -> dict[str, str]:
-    """Entity names per key, from a resolved device config (levoit platform only).
+    """Entity names per key, from the resolved purifier or LV600S config.
 
     Only the names are kept: the config itself has secrets.
     """
@@ -155,6 +180,62 @@ def config_names(config: Mapping[str, Any]) -> dict[str, str]:
             name = entry.get("name")
             if isinstance(kind, str) and isinstance(name, str) and name:
                 names[f"{platform}.{kind}"] = name
+    # The LV600S component declares sensors within its parent block; controls
+    # are template entities. Read only explicit names/IDs, never execute lambdas.
+    lv = config.get("lv600s_humidifier")
+    if isinstance(lv, dict):
+        nested = {
+            "current_humidity": "sensor.humidity",
+            "current_temperature": "sensor.temperature",
+            "timer_remaining": "text_sensor.timer_duration_remaining",
+            "water_lacks": "binary_sensor.water_tank_empty",
+            "tank_removed": "binary_sensor.tank_removed",
+            "humidifying": "binary_sensor.humidifying",
+            "warm_enabled": "binary_sensor.heating_enabled",
+            "online": "binary_sensor.mcu_connection",
+            "fault": "binary_sensor.mcu_fault",
+            "fault_message": "text_sensor.error_message",
+            "mcu_version": "text_sensor.mcu_version",
+            "esp_version": "text_sensor.esp_version",
+            "model_sensor": "text_sensor.model",
+        }
+        for key, kind in nested.items():
+            entry = lv.get(key)
+            if isinstance(entry, dict) and isinstance(entry.get("name"), str):
+                names[kind] = entry["name"]
+    # Both variants can use the same template names for the extra entities.
+    # The shared model declares its main controls on the native fan platform.
+    shared = config.get("levoit")
+    shared_blocks = shared if isinstance(shared, list) else [shared]
+    if isinstance(lv, dict) or any(
+        isinstance(block, Mapping) and block.get("model") == "LV600S" for block in shared_blocks
+    ):
+        names.update(_lv600s_template_names(config))
+    return names
+
+
+def _lv600s_template_names(config: Mapping[str, Any]) -> dict[str, str]:
+    """Resolve the stable template IDs in both LV600S variants."""
+    names: dict[str, str] = {}
+    ids = {
+        "humidifier_display": "switch.display",
+        "humidifier_mode_status": "text_sensor.reported_mode",
+        "humidifier_target": "number.humidity_target",
+        "humidifier_target_preset": _LV_TARGET_PRESET,
+        "humidifier_warm": "number.warm_level",
+        "humidifier_timer": "number.timer",
+        "humidifier_timer_duration": "text_sensor.timer_duration_initial",
+        "humidifier_timer_remaining": "text_sensor.timer_duration_remaining",
+    }
+    for platform in ("switch", "number", "text_sensor"):
+        entries = config.get(platform)
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if isinstance(entry, Mapping) and entry.get("platform") == "template":
+                entry_id, name = entry.get("id"), entry.get("name")
+                if isinstance(entry_id, str) and entry_id in ids and isinstance(name, str):
+                    names[ids[entry_id]] = name
     return names
 
 
@@ -163,11 +244,38 @@ def _norm(name: str) -> str:
 
 
 def _candidates(key: str, model: str | None, configured: Mapping[str, str]) -> Iterable[str]:
+    if model == "LV600S" and key == "number.humidity_target" and _LV_TARGET_PRESET in configured:
+        yield configured[_LV_TARGET_PRESET]
     if key in configured:
         yield configured[key]
     yield from MODEL_NAMES.get(model or "", {}).get(key, ())
     if key not in MODEL_NAMES.get(model or "", {}):
         yield from DEFAULT_NAMES.get(key, ())
+
+
+def lv600s_stores_target(
+    hass: HomeAssistant, entity_id: str | None, configured: Mapping[str, str]
+) -> bool:
+    """Recognize the preset control by its public name or configured template ID."""
+    entry = er.async_get(hass).async_get(entity_id) if entity_id else None
+    if entry is None or entry.original_name is None:
+        return False
+    name = _norm(entry.original_name)
+    candidates = (_LV_TARGET_NAME, configured.get(_LV_TARGET_PRESET, ""))
+    return any(
+        name == _norm(candidate) or name.endswith(f" {_norm(candidate)}")
+        for candidate in candidates
+        if candidate
+    )
+
+
+def _esphome_entity_type(unique_id: str) -> str | None:
+    # ESPHome has used both mac-platform-object_id and mac/device/platform/name.
+    if "/" in unique_id:
+        parts = unique_id.split("/", 3)
+        return parts[2] if len(parts) == 4 else None
+    parts = unique_id.split("-", 2)
+    return parts[1] if len(parts) == 3 else None
 
 
 def match_controls(
@@ -183,28 +291,45 @@ def match_controls(
     not the level.
     """
     configured = configured or {}
-    entities: list[tuple[str, str, str]] = []  # domain, normalised name, entity_id
+    entities: list[tuple[str, str, str, str]] = []
     for entry in er.async_entries_for_device(er.async_get(hass), device_id):
         if entry.platform != ESPHOME_DOMAIN or entry.disabled_by is not None:
             continue
         if entry.original_name:
-            entities.append((entry.domain, _norm(entry.original_name), entry.entity_id))
+            entities.append(
+                (entry.domain, _norm(entry.original_name), entry.entity_id, entry.unique_id)
+            )
 
     # keys with a specific source first: config names, then model exceptions
+    model_names = MODEL_NAMES.get(model or "", {})
+    available_keys = dict.fromkeys((*DEFAULT_NAMES, *model_names))
     keys = sorted(
-        DEFAULT_NAMES,
-        key=lambda k: (k not in configured, k not in MODEL_NAMES.get(model or "", {})),
+        available_keys,
+        key=lambda k: (k not in configured, k not in model_names),
     )
     found: dict[str, str] = {}
     used: set[str] = set()
 
-    def match(key: str, *, suffix: bool) -> None:
+    def match(
+        key: str,
+        *,
+        suffix: bool,
+        source: str | None = None,
+        available_only: bool = False,
+        names: Iterable[str] | None = None,
+    ) -> None:
         domain = PLATFORM_DOMAINS[key.split(".", 1)[0]]
-        for name in _candidates(key, model, configured):
+        for name in names if names is not None else _candidates(key, model, configured):
             wanted = _norm(name)
-            for entity_domain, entity_name, entity_id in entities:
+            for entity_domain, entity_name, entity_id, unique_id in entities:
                 if entity_domain != domain or entity_id in used:
                     continue
+                if source and _esphome_entity_type(unique_id) != source:
+                    continue
+                if available_only:
+                    state = hass.states.get(entity_id)
+                    if state is None or state.state == STATE_UNAVAILABLE:
+                        continue
                 # suffix: older configs without friendly_name put the device
                 # name in front ("bedroom Auto Mode")
                 if entity_name == wanted or (suffix and entity_name.endswith(f" {wanted}")):
@@ -213,7 +338,23 @@ def match_controls(
                     return
 
     for key in keys:
-        match(key, suffix=False)
+        if model == "LV600S" and key == "text_sensor.timer_duration_remaining":
+            # Prefer a reporting text timer; the registry can retain old sensors.
+            names = (configured[key],) if key in configured else None
+            for source, available_only in (
+                ("text_sensor", True),
+                ("sensor", True),
+                ("text_sensor", False),
+            ):
+                match(key, suffix=False, source=source, available_only=available_only, names=names)
+                if key not in found:
+                    match(
+                        key, suffix=True, source=source, available_only=available_only, names=names
+                    )
+                if key in found:
+                    break
+        if key not in found:
+            match(key, suffix=False)
     for key in keys:
         if key not in found:
             match(key, suffix=True)

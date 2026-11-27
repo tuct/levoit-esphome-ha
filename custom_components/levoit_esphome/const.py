@@ -5,7 +5,7 @@ from datetime import timedelta
 DOMAIN = "levoit_esphome"
 
 # ESPHome components from tuct/levoit that make a device ours.
-COMPONENTS = frozenset({"levoit", "philips"})
+COMPONENTS = frozenset({"levoit", "philips", "lv600s_humidifier"})
 
 # `model:` values of those components (VALID_MODELS in components/levoit and
 # components/philips __init__.py). The `model` text sensor is recognised by its
@@ -16,6 +16,7 @@ KNOWN_MODELS = frozenset(
         "CORE300S",
         "CORE400S",
         "CORE600S",
+        "LV600S",
         "ELEVA300X",
         "EVERESTAIR",
         "SPROUT",

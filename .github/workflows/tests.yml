@@ -37,3 +37,9 @@ jobs:
 
       - name: pytest
         run: pytest -v
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Humidifier panel regression
+        run: node --test tests/frontend_lv600s.mjs

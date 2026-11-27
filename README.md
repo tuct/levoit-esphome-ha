@@ -89,6 +89,11 @@ Assistant's device page. It needs no Device Builder config: the settings are
 found by their entity names, as the tuct/levoit configs name them (or as the
 device's config does, when there is one).
 
+The LV600S page uses the ESPHome fan from `levoit` model `LV600S` for power,
+mist level and operating mode. It also shows humidity, temperature, tank
+status, warm mist and the timer. The older standalone component still appears
+in the device list and links to its Home Assistant device page.
+
 <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/device-page.png?v=0.6.8" width="720" alt="A device page: power, mode and speed, PM2.5, AQI and CADR, the 24 hour history in one chart, and the settings">
 
 ## Purifier groups
