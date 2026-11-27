@@ -115,6 +115,8 @@ updates come over the air.
 
 <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-7-compile.png?v=0.8.1" width="720" alt="Compile: Setup done with ESP-IDF 5.5.6, Compile running at 40 of 936 files with its bar, and the build output below">
 
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-9-online.png?v=0.8.1" width="720" alt="levoit-core300s-c3-two is online: on the network and in Home Assistant with its config, updates over the air from here on; Open the device, Updates and config, Add another device">
+
 > **Early version.** Part of the
 > [firmware update plan](https://github.com/tuct/levoit/blob/main/docs/firmware-updates.md).
 
