@@ -292,6 +292,29 @@ const timeToHours = (time) => {
   return h + (m || 0) / 60;
 };
 
+// A build output line marked up as a terminal colours it. The integration
+// strips the colour codes (the Device Builder sends them, sometimes as text),
+// so the colour comes from what the line says: ESPHome's level word, the
+// compiler's "error:" / "warning:", ninja's [n/m] counter, a success line.
+const LOG_LEVEL = /^(INFO|WARNING|ERROR|CRITICAL|DEBUG)(\s)/;
+const logClass = (line) => {
+  if (/^(ERROR|CRITICAL)\b|\berror:|\[FAILED\]|^FAILED:|ninja: build stopped|^Traceback|^\s*\^~*\s*$/.test(line)) return "ln-err";
+  if (/^WARNING\b|\bwarning:/.test(line)) return "ln-warn";
+  if (/^(INFO )?Successfully\b|\[SUCCESS\]|OTA successful/i.test(line)) return "ln-ok";
+  if (/^\[\d+\/\d+\]/.test(line)) return "ln-step";
+  return "";
+};
+const logLine = (line) => {
+  const text = String(line ?? "");
+  const cls = logClass(text);
+  let body = esc(text);
+  const level = LOG_LEVEL.exec(text);
+  if (level) body = `<b class="lv-${level[1].toLowerCase()}">${level[1]}</b>${level[2]}${esc(text.slice(level[0].length))}`;
+  else if (cls === "ln-step") body = body.replace(/^(\[\d+\/\d+\])/, '<span class="ln-count">$1</span>');
+  return cls ? `<span class="ln ${cls}">${body}</span>` : body;
+};
+const logLines = (lines) => lines.map(logLine).join("\n");
+
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -1408,6 +1431,9 @@ class LevoitEsphomePanel extends HTMLElement {
         }</div>
       </div>
       ${this._logDialog()}`;
+    // the wizard's last lines: always the newest in view
+    const wzTail = this.shadowRoot.querySelector(".wz-tail");
+    if (wzTail) wzTail.scrollTop = wzTail.scrollHeight;
     const pre = this.shadowRoot.querySelector(".log pre");
     if (pre) {
       // newest lines in view, unless someone scrolled up in the full log
@@ -2159,7 +2185,9 @@ class LevoitEsphomePanel extends HTMLElement {
     if (a.building && !steps) line = `<p class="muted"><span class="spinner"></span> Starting the build…</p>`;
     else if (a.buildOk) line = `<p class="ok">${upload ? "Compiled and uploaded." : "Compiled."}</p>`;
     else if (a.buildError) line = `<p class="bad">${esc(a.buildError)}</p>`;
-    return `<div class="wz-build">${steps}${line}${log ? `<div class="wz-actions">${log}</div>` : ""}</div>`;
+    // the newest lines, as the log shows them, right under the steps
+    const tail = steps && d.build?.tail?.length ? `<pre class="wz-tail">${logLines(d.build.tail)}</pre>` : "";
+    return `<div class="wz-build">${steps}${tail}${line}${log ? `<div class="wz-actions">${log}</div>` : ""}</div>`;
   }
 
   _wzBuildScreen() {
@@ -4405,7 +4433,7 @@ class LevoitEsphomePanel extends HTMLElement {
           <button class="btn" data-action="close-log">Close</button>
         </div>
         ${this._stepsList(d?.build)}
-        <pre class="${full ? "full" : "tail"}">${lines.length ? lines.map(esc).join("\n") : "No output yet."}</pre>
+        <pre class="${full ? "full" : "tail"}">${lines.length ? logLines(lines) : "No output yet."}</pre>
       </div>
     </div>`;
   }
@@ -4427,6 +4455,7 @@ const STYLE = `
   --lv-pm1: #4fb3e8;
   --lv-pm10: #1a4f8b;
   --lv-cadr: #e65100;
+  --lv-log-ok: #2e7d32; --lv-log-warn: #b26a00;
   /* air quality level 1-4: lighter to darker as well as green to red */
   --lv-q1: #43a047; --lv-q2: #c0ca33; --lv-q3: #ffa000; --lv-q4: #c62828;
   --lv-q1-bg: #e8f5e9; --lv-q1-fg: #1b5e20; --lv-q2-bg: #f1f8e9; --lv-q2-fg: #33691e;
@@ -4434,6 +4463,7 @@ const STYLE = `
 }
 :host([dark]) {
   --lv-cadr: #ffa726;
+  --lv-log-ok: #81c784; --lv-log-warn: #ffb74d;
   --lv-pm1: #8fd3f7;
   --lv-pm10: #5b8fd6;
   --lv-q4: #e53935;
@@ -4574,6 +4604,19 @@ select:disabled { opacity: 0.6; }
 .log pre { margin: 0; padding: 12px 16px; overflow: auto; font-size: 12px; line-height: 1.45;
   font-family: var(--code-font-family, ui-monospace, Menlo, Consolas, monospace);
   white-space: pre-wrap; word-break: break-word; box-sizing: border-box; }
+.ln.ln-err { color: var(--error-color, #db4437); }
+.ln.ln-warn { color: var(--lv-log-warn); }
+.ln.ln-ok { color: var(--lv-log-ok); }
+.ln.ln-step { color: var(--secondary-text-color); }
+.ln-count { color: var(--lv-accent-text); }
+b.lv-info { font-weight: 600; color: var(--lv-log-ok); }
+b.lv-warning { font-weight: 600; color: var(--lv-log-warn); }
+b.lv-error, b.lv-critical { font-weight: 600; color: var(--error-color, #db4437); }
+b.lv-debug { font-weight: 600; color: var(--secondary-text-color); }
+.wz-tail { margin: 0 0 8px; padding: 10px 12px; height: 11.5em; overflow: auto; box-sizing: border-box;
+  font-size: 12px; line-height: 1.45; font-family: var(--code-font-family, ui-monospace, Menlo, Consolas, monospace);
+  white-space: pre-wrap; word-break: break-word; border-radius: 10px; border: 1px solid var(--divider-color);
+  background: var(--lv-tile); }
 /* a fixed height, so the dialog does not jump as the lines come and go */
 .log pre.tail { height: min(300px, 45vh); }
 .log pre.full { height: min(640px, 65vh); }
