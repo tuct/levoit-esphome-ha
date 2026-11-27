@@ -110,7 +110,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: LevoitEsphomeConfigEntry
     entry.async_on_unload(lambda: async_remove_cards(hass))
     if entry.options.get(CONF_SHOW_PANEL):
         await async_register_panel(hass)
-        entry.async_on_unload(lambda: async_remove_panel(hass))
+        # kept for a reload (a device added, an option changed): see async_remove_panel
+        entry.async_on_unload(lambda: async_remove_panel(hass, later=True))
+    else:
+        async_remove_panel(hass)  # the option was switched off
     # an open panel follows the new coordinator
     async_dispatcher_send(hass, SIGNAL_COORDINATOR)
     return True
@@ -131,6 +134,11 @@ async def async_remove_config_entry_device(
         None,
     )
     return device is None or (not device.configuration and device.online is not True)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Deleted: the sidebar entry goes now, not after the grace of an unload."""
+    async_remove_panel(hass)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: LevoitEsphomeConfigEntry) -> bool:

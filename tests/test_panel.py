@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
 from custom_components.levoit_esphome.const import DOMAIN, PANEL_URL_PATH
-from homeassistant.components.frontend import DATA_PANELS
-from homeassistant.core import HomeAssistant
+from custom_components.levoit_esphome.panel import PANEL_GRACE
+from homeassistant.components.frontend import DATA_PANELS, EVENT_PANELS_UPDATED
+from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.util import dt as dt_util
 
 from .conftest import FakeBuilder, assert_compiled
 
@@ -46,6 +49,49 @@ async def test_panel_behind_option(hass: HomeAssistant) -> None:
     assert custom["module_url"].startswith("/levoit_esphome_static/levoit-esphome-panel.js?v=")
 
     await _set_option(hass, entry, False)
+    assert PANEL_URL_PATH not in hass.data.get(DATA_PANELS, {})
+
+
+@pytest.mark.usefixtures("esphome_devices", "patch_sources")
+async def test_panel_stays_through_a_reload(hass: HomeAssistant) -> None:
+    """Adding a device sets the entry up again: the open page must not be sent away.
+
+    Removing the panel for that moment makes the frontend open the default
+    dashboard; so the sidebar entry stays, and goes only when the entry stays
+    unloaded, or at once when it is deleted.
+    """
+    entry = await _setup(hass, {"show_panel": True})
+    panel = hass.data[DATA_PANELS][PANEL_URL_PATH]
+    updates: list[Event] = []
+
+    @callback
+    def panels_updated(event: Event) -> None:
+        updates.append(event)
+
+    hass.bus.async_listen(EVENT_PANELS_UPDATED, panels_updated)
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert hass.data[DATA_PANELS][PANEL_URL_PATH] is panel  # the same entry, untouched
+    assert updates == []
+    # nothing left to remove it later either
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=PANEL_GRACE + 1))
+    await hass.async_block_till_done()
+    assert PANEL_URL_PATH in hass.data[DATA_PANELS]
+
+    # unloaded and not set up again: gone after the grace
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert PANEL_URL_PATH in hass.data[DATA_PANELS]
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=2 * PANEL_GRACE + 2))
+    await hass.async_block_till_done()
+    assert PANEL_URL_PATH not in hass.data.get(DATA_PANELS, {})
+
+    # deleted: gone at once
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert PANEL_URL_PATH in hass.data[DATA_PANELS]
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
     assert PANEL_URL_PATH not in hass.data.get(DATA_PANELS, {})
 
 

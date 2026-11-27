@@ -12,7 +12,8 @@ from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.loader import async_get_integration
 from homeassistant.util.hass_dict import HassKey
 
@@ -26,6 +27,10 @@ CARDS_FILE = "levoit-esphome-cards.js"
 # static paths cannot be removed again: registered once per Home Assistant run
 _STATIC_REGISTERED: HassKey[bool] = HassKey(f"{DOMAIN}_static")
 _CARDS_URL: HassKey[str] = HassKey(f"{DOMAIN}_cards_url")
+# a removal of the sidebar entry waiting to happen (see async_remove_panel)
+_PANEL_REMOVAL: HassKey[CALLBACK_TYPE] = HassKey(f"{DOMAIN}_panel_removal")
+# how long an unloaded entry keeps its sidebar entry, for the setup of a reload
+PANEL_GRACE = 60  # seconds
 
 
 async def _async_serve_frontend(hass: HomeAssistant) -> None:
@@ -61,7 +66,10 @@ def async_remove_cards(hass: HomeAssistant) -> None:
 
 
 async def async_register_panel(hass: HomeAssistant) -> None:
-    """Add the sidebar entry (admins only)."""
+    """Add the sidebar entry (admins only); keep it if it is still there from a reload."""
+    _cancel_removal(hass)
+    if frontend.async_panel_exists(hass, PANEL_URL_PATH):
+        return
     await _async_serve_frontend(hass)
     version = (await async_get_integration(hass, DOMAIN)).version
     await panel_custom.async_register_panel(
@@ -77,7 +85,30 @@ async def async_register_panel(hass: HomeAssistant) -> None:
     )
 
 
+def _cancel_removal(hass: HomeAssistant) -> None:
+    if (cancel := hass.data.pop(_PANEL_REMOVAL, None)) is not None:
+        cancel()
+
+
 @callback
-def async_remove_panel(hass: HomeAssistant) -> None:
-    """Remove the sidebar entry."""
-    frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)
+def async_remove_panel(hass: HomeAssistant, *, later: bool = False) -> None:
+    """Remove the sidebar entry, now or (`later`) unless the entry is set up again first.
+
+    The entry is set up again whenever a device is added (a sub-entry) or an
+    option changes. Removing the sidebar entry for that moment sends whoever
+    has the page open to the default dashboard: the Add device page lost its
+    user right after Create. So an unload only schedules the removal, and the
+    setup that follows keeps the entry; an entry that stays unloaded (disabled,
+    deleted, failing) loses it after PANEL_GRACE seconds.
+    """
+    _cancel_removal(hass)
+    if not later:
+        frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)
+        return
+
+    @callback
+    def remove(_now: object) -> None:
+        hass.data.pop(_PANEL_REMOVAL, None)
+        frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)
+
+    hass.data[_PANEL_REMOVAL] = async_call_later(hass, PANEL_GRACE, remove)
