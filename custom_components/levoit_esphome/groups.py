@@ -3,8 +3,10 @@
 The rules (levels, speed mapping, hold, rising fast) are in groups_logic.py.
 Here each enabled group follows its sensors and members and puts each member at
 its step for the group level: Off, Sleep, or Manual at a speed (Turbo for the
-Everest Air's top one). Without any sensor value (or with the group turned
-off) it lets go: the purifiers keep running as they are.
+Everest Air's top one). Turned off (its switch, its fan, the power button),
+the group turns its purifiers off. Without any sensor value it lets go: the
+purifiers keep running as they are; so does a purifier that leaves the group,
+and every one of a deleted group.
 Changes the group made carry its own Context; any other change to a member it
 controls is a person's, and pauses the group for that member.
 """
@@ -713,13 +715,19 @@ class GroupRunner:
         self.manager.async_notify(self.config.id)
 
     async def async_update_config(self, config: GroupConfig) -> None:
-        """New settings; members that left are let go (they stay as they are)."""
+        """New settings; members that left are let go (they stay as they are).
+
+        Turned off, the group turns its purifiers off: off means off, also for
+        one paused after a change by hand.
+        """
         async with self._lock:
             old = self.config
             self._release([m for m in self._targets if m not in config.members])
             for member in set(self.paused_until) - set(config.members):
                 del self.paused_until[member]
             self.config = config
+            if old.enabled and not config.enabled:
+                await self._async_turn_off_members()
             if old.mode == MODE_MANUAL and config.mode == MODE_AUTO:
                 self.keeper.since = None  # step down without waiting
             if set(old.members) != set(config.members) or old.sensors != config.sensors:
@@ -737,6 +745,15 @@ class GroupRunner:
         self.stop()
         async with self._lock:
             self._release(list(self._targets))
+
+    async def _async_turn_off_members(self) -> None:
+        """Turn off every member that is on (the group was turned off); then let go."""
+        self.paused_until.clear()
+        self._release(list(self._targets))
+        for member in self.config.members:
+            state = self.hass.states.get(member)
+            if state is not None and state.state == STATE_ON:
+                await self._async_call(SERVICE_TURN_OFF, {ATTR_ENTITY_ID: member})
 
     @callback
     def _release(self, members: Iterable[str]) -> None:

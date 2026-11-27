@@ -54,5 +54,5 @@ class GroupControlSwitch(LevoitGroupEntity, SwitchEntity):
         await self._manager.async_set_enabled(self._group_id, True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Let go of the purifiers; they stay as they are."""
+        """Turn the group and its purifiers off."""
         await self._manager.async_set_enabled(self._group_id, False)

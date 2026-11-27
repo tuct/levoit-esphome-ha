@@ -89,7 +89,7 @@ what it runs at, Auto / Manual and the levels. **Medium** (6 × 4): PM2.5 large
 with the air quality, the purifiers and CADR, Auto / Manual and the levels.
 **Small** (6 × 2): Auto and the levels in one row. **Compact** (6 × 1 or
 3 × 1): "Auto · L4 · 360 µg/m³". The power button (on small cards the icon) is
-the group's control: off lets go of the purifiers and greys out the controls.
+the group's control: off turns its purifiers off and greys out the controls.
 A level switches the group to Manual at that level. Without an AQI index the
 group shows its air quality (its own thresholds, 1–4).
 

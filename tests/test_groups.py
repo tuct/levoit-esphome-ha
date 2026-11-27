@@ -307,7 +307,7 @@ async def test_manual_change_pauses_that_member(
 async def test_control_switch_and_manual_mode(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """The switch lets go (nothing sent); Manual mode runs one level, sensors ignored."""
+    """The switch off turns the purifiers off; Manual mode runs one level, sensors ignored."""
     calls = await _fake_fans(hass)
     _purifiers(hass)
     await _setup(hass)
@@ -321,6 +321,11 @@ async def test_control_switch_and_manual_mode(
     await _settle(hass)
     assert hass.states.get(CONTROL).state == "off"
     assert hass.states.get(LEVEL).attributes["status"] == "paused"
+    # off means off: both purifiers, once
+    assert calls == [("turn_off", "fan.bedroom", {}), ("turn_off", "fan.living", {})]
+    assert hass.states.get(LEVEL).attributes["members_in_control"] == []
+    calls.clear()
+    await _settle(hass)
     assert calls == []
 
     await hass.services.async_call("switch", "turn_on", {"entity_id": CONTROL}, blocking=True)
@@ -481,7 +486,12 @@ async def test_old_runtime_is_ignored(hass: HomeAssistant, hass_storage: dict[st
 
 @pytest.mark.usefixtures("patch_sources")
 async def test_group_fan(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
-    """The group as one fan: on / off is its control, Auto / Manual, speeds set the manual level."""
+    """The group as one fan: on / off is its control, Auto / Manual, speeds set the manual level.
+
+    The fan services are the real ones here (the group's own fan has to take
+    them); turning the group off turns its purifiers off as the switch does
+    (test_control_switch_and_manual_mode).
+    """
     _purifiers(hass)
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -891,3 +901,46 @@ async def test_cards_for_any_user(
     # the panel's group commands stay admins only
     msg = await _call(client, {"type": "levoit_esphome/groups/list"})
     assert msg["error"]["code"] == "unauthorized"
+
+
+@pytest.mark.usefixtures("patch_sources")
+async def test_off_turns_off_paused_and_skips_off_and_offline(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Off is off for a purifier paused by hand too; one that is off or offline gets nothing."""
+    calls = await _fake_fans(hass)
+    _purifiers(hass)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    group = await _save(client, members=MEMBERS)
+    await _settle(hass)
+    # someone runs the bedroom one by hand: the group pauses it
+    bedroom = hass.states.get("fan.bedroom")
+    hass.states.async_set("fan.bedroom", "on", {**bedroom.attributes, "percentage": 100})
+    await _settle(hass)
+    assert hass.states.get(LEVEL).attributes["members_in_control"] == ["fan.living"]
+    living = hass.states.get("fan.living")
+    hass.states.async_set("fan.living", "unavailable", living.attributes)
+    calls.clear()
+
+    await _save(client, id=group["id"], members=MEMBERS, enabled=False)
+    await _settle(hass)
+    assert calls == [("turn_off", "fan.bedroom", {})]
+
+    # off already: turning it off again, or saving it off, sends nothing
+    calls.clear()
+    await _save(client, id=group["id"], members=MEMBERS, enabled=False, hold_min=3)
+    await hass.services.async_call("switch", "turn_off", {"entity_id": CONTROL}, blocking=True)
+    await _settle(hass)
+    assert calls == []
+
+    # a deleted group still lets go
+    await hass.services.async_call("switch", "turn_on", {"entity_id": CONTROL}, blocking=True)
+    hass.states.async_set("fan.living", "on", living.attributes)
+    await _settle(hass)
+    calls.clear()
+    assert (await _call(client, {"type": "levoit_esphome/groups/delete", "group_id": group["id"]}))[
+        "success"
+    ]
+    await _settle(hass)
+    assert calls == []
