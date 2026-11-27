@@ -44,11 +44,20 @@ themselves, with no resource to add. [More](docs/sidebar-page.md#dashboard-cards
 **Manage and update them.** It finds every ESPHome device built with the
 `levoit` or `philips` component and links it to its config in the ESPHome
 Device Builder. When the device's channel has a newer component version, an
-update shows up under *Settings → Updates*, and *Install* compiles the config
-and uploads it over the air. *Add device* makes the config for a new
-purifier. [More](docs/updates.md)
+update shows up under *Settings → Updates* with its release notes. *Install*
+compiles the config and uploads it over the air, and you can follow each step
+live: setup, compile with a file count, link, then the upload with its
+percentage. *Add device* makes the config for a new purifier.
+[More](docs/updates.md)
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/panel-updates.png?v=0.6.8" width="49%" alt="Updates and config: every device with its channel, installed and latest version, and Compile and Update">
+<p>
+  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/panel-updates.png?v=0.6.8" width="49%" alt="Updates and config: every device with its channel, installed and latest version, and Compile and Update">
+  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/update-dialog.png?v=0.6.8" width="24%" alt="The Component firmware update of a purifier: installed 1.3.0, latest 1.7.2, with the release notes, installing">
+</p>
+<p>
+  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log.png?v=0.7.1" width="49%" alt="A running build: the device row says Compile 111 / 117 with a bar; the Log dialog shows Setup done with ESP-IDF 5.5.6, Compile running at 111 of 117 on main.cpp, Link and image, Result and Upload queued, and the last lines of the output">
+  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log-upload.png?v=0.7.1" width="49%" alt="The same build uploading: Setup, Compile with 107 files, Link and image with a 900 KB image and Result with RAM 30.3 % and Flash 50.2 % done, Upload at 74 % with its bar, and the upload's progress lines">
+</p>
 
 ### Air purifier groups
 
