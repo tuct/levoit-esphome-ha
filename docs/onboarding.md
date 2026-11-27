@@ -197,8 +197,11 @@ their hardware hacks) are listed with a link to their folder and no wizard.
    OTA credential migrates to `encryption:` after its first upload, and a
    refused encrypted upload without a password secret drops the encryption
    again.
-2. **The wizard, to the config**: steps 1 to 6 in the panel, plain screens,
-   the panel's Add device button opens it. The integration page flow stays.
+2. **The wizard, to the config** (#73): steps 1 to 6 in the panel at
+   `/levoit-esphome/add[/<name>]`, the panel's Add device and Add config
+   buttons open it; the name checked as typed, Other ESP with the base's
+   defaults, the protection screen from the rule. The integration page flow
+   stays.
 3. **Build and flash**: steps 7 to 9, compile with the counter, OTA for an
    existing device, the Device Builder link for a fresh ESP, waiting for the
    device, done with the page link.
