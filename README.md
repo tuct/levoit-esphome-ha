@@ -20,44 +20,41 @@ Use them, run a room as one group, and update their firmware, all from Home Assi
 
 ## Features
 
-### A UI for your Levoit ESPHome devices
+### Your purifiers at a glance
 
-**Use them.** A sidebar page with every purifier as a card: power, mode and
-speed, PM2.5, AQI and CADR at a glance. Each purifier has a page of its own
-with its air quality history and all its settings, grouped instead of one long
-list. [More](docs/sidebar-page.md)
+A sidebar page with every purifier as a card: power, mode and speed, PM2.5,
+AQI and CADR, an air quality dot, and the filter and timer left. A line on top
+counts the purifiers running, off and offline, and names the one with the worst air.
+[More](docs/sidebar-page.md#devices-tab)
 
-<p>
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/overview.png?v=0.6.8" width="49%" alt="The sidebar page: seven purifiers as cards, each with power, mode and speed, PM2.5, AQI and CADR">
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/device-page.png?v=0.6.8" width="49%" alt="The Everest Air's page: power, mode and speed, PM2.5, PM1.0, PM10, AQI and CADR, its group, the 24 hour history and the settings">
-</p>
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/overview.png?v=0.8.1" width="720" alt="The sidebar page: purifiers as cards, each with power, mode and speed, PM2.5, AQI and CADR">
 
-**Put them on any dashboard.** Three cards, *Levoit purifier*, *Levoit
-group* and *Levoit list*, for every user, not only admins. They load by
-themselves, with no resource to add. [More](docs/sidebar-page.md#dashboard-cards)
+### A page per purifier
 
-<p>
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-purifier.png?v=0.6.8" width="49%" alt="The purifier card in its sizes: large with PM2.5, AQI, CADR, speeds and mode; medium; small with the speeds; compact with the state only">
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-list.png?v=0.6.8" width="49%" alt="The list card: a group with its two purifiers under it, then the other purifiers, each with PM2.5, mode, speed or level and power">
-</p>
+Power, mode and speed with PM2.5, AQI and CADR on top, the air quality history
+over 12 hours to 30 days in one chart, and all the settings grouped:
+automatic, sleep, timer, display, filter.
+[More](docs/sidebar-page.md#device-page)
 
-**Manage and update them.** It finds every ESPHome device built with the
-`levoit` or `philips` component and links it to its config in the ESPHome
-Device Builder. When the device's channel has a newer component version, an
-update shows up under *Settings → Updates* with its release notes. *Install*
-compiles the config and uploads it over the air, and you can follow each step
-live: setup, compile with a file count, link, then the upload with its
-percentage. *Add device* makes the config for a new purifier.
-[More](docs/updates.md)
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/device-page.png?v=0.8.1" width="720" alt="A purifier's page: power, mode and speed, PM2.5, AQI and CADR, the 24 hour history and the settings">
 
-<p>
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/panel-updates.png?v=0.6.8" width="49%" alt="Updates and config: every device with its channel, installed and latest version, and Compile and Update">
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/update-dialog.png?v=0.6.8" width="24%" alt="The Component firmware update of a purifier: installed 1.3.0, latest 1.7.2, with the release notes, installing">
-</p>
-<p>
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log.png?v=0.7.1" width="49%" alt="A running build: the device row says Compile 111 / 117 with a bar; the Log dialog shows Setup done with ESP-IDF 5.5.6, Compile running at 111 of 117 on main.cpp, Link and image, Result and Upload queued, and the last lines of the output">
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log-upload.png?v=0.7.1" width="49%" alt="The same build uploading: Setup, Compile with 107 files, Link and image with a 900 KB image and Result with RAM 30.3 % and Flash 50.2 % done, Upload at 74 % with its bar, and the upload's progress lines">
-</p>
+### Dashboard cards
+
+Three cards for any dashboard and every user, not only admins. They load by
+themselves, with no resource to add.
+[More](docs/sidebar-page.md#dashboard-cards)
+
+**Purifier card:** one purifier in four sizes, from large to compact.
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-purifier.png?v=0.8.1" width="720" alt="The purifier card in its sizes: large with PM2.5, AQI, CADR, speeds and mode; medium; small with the speeds; compact with the state only">
+
+**Group card:** a group with its level, its combined PM2.5 and AQI, the total CADR and a chip per purifier, in four sizes.
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-group.png?v=0.8.1" width="720" alt="The group card in its sizes: large with the level bars, PM2.5, AQI index, CADR, its purifiers, Auto or Manual and the levels; medium; small with Auto and the levels in one row; compact">
+
+**List card:** a row per group and purifier, the purifiers under their group, with PM2.5, mode, speed or level and power.
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/cards-list.png?v=0.8.1" width="720" alt="The list card: a group with its two purifiers under it, then the other purifiers, each with PM2.5, mode, speed or level and power">
 
 ### Air purifier groups
 
@@ -74,19 +71,51 @@ after a restart.
 - **Hands off when you take over.** Change a purifier by hand and the group
   leaves it alone for 30 minutes. With no sensor value, it lets go entirely.
 - **Manual** runs one level on every purifier in the group.
-- **One fan entity per group**, for dashboards, voice and automations. It
-  comes with sensors for the level, the air quality, the combined PM values
-  and the total CADR.
-- **A page per group** with its history and the level as a band, and an
-  editor that shows live what the group would do. Rooms with two or more
-  purifiers are suggested as groups.
+- **One fan entity per group**, for dashboards, voice and automations, with
+  sensors for the level, the air quality, the combined PM values and the
+  total CADR.
+- **Rooms with two or more purifiers** are suggested as groups.
 
 [More](docs/groups.md)
 
-<p>
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/groups.png?v=0.6.8" width="49%" alt="Purifier groups: each group with its level, reason, sensors and purifiers">
-  <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/group-page.png?v=0.6.8" width="49%" alt="A group's page: power, Auto or Manual and level 1 to 4, tiles for PM2.5, AQI index and CADR, the 24 hour history with the level as a band, and its purifiers">
-</p>
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/groups.png?v=0.8.1" width="720" alt="Purifier groups: each group with its level, reason, sensors and purifiers">
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/group-page.png?v=0.8.1" width="720" alt="A group's page: power, Auto or Manual and level 1 to 4, tiles for PM2.5, AQI index and CADR, the history with the level as a band, and its purifiers">
+
+### Firmware updates
+
+Every ESPHome device built with the `levoit` or `philips` component is found
+and linked to its config in the ESPHome Device Builder. When the device's
+channel has a newer component version, an update shows up under *Settings →
+Updates* with its release notes.
+[More](docs/updates.md)
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/panel-updates.png?v=0.8.1" width="720" alt="Updates and config: every device with its channel, installed and latest version, and Compile and Update">
+
+*Install* compiles the config and uploads it over the air. You can follow
+each step live: setup, compile with a file count, link, then the upload with
+its percentage.
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/build-log-upload.png?v=0.7.1" width="720" alt="A build uploading: Setup, Compile with 107 files, Link and image with a 900 KB image and Result with RAM 30.3 % and Flash 50.2 % done, Upload at 74 % with its bar, and the upload's progress lines">
+
+### Add a new purifier
+
+*Add device* walks you through it, one step at a time. Pick the model, with
+its photo and notes from [tuct/levoit](https://github.com/tuct/levoit), then
+the ESP: the original one, a Seeed XIAO ESP32-S3 / C3, or your own board.
+Give it a name and a channel, see exactly what gets written, and create the
+config with its own keys. It compiles right away, with the build's steps
+live; you flash it once over USB from the Device Builder, and after that,
+updates come over the air.
+[More](docs/updates.md#add-device)
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-1-model.png?v=0.8.1" width="720" alt="Which purifier: the models with a template, each with its photo, status, CADR, how easy it is to open and the ESPs it has a template for; below them the models with a guide but no template">
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-2-esp.png?v=0.8.1" width="720" alt="Which ESP for the Levoit Core 300S: original ESP, Seeed XIAO ESP32-S3, Seeed XIAO ESP32-C3, or Other ESP with your own board and pins">
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-7-compile.png?v=0.8.1" width="720" alt="Compile: Setup done with ESP-IDF 5.5.6, Compile running at 40 of 936 files with its bar, and the build output below">
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-9-online.png?v=0.8.1" width="720" alt="levoit-core300s-c3-two is online: on the network and in Home Assistant with its config, updates over the air from here on; Open the device, Updates and config, Add another device">
 
 > **Early version.** Part of the
 > [firmware update plan](https://github.com/tuct/levoit/blob/main/docs/firmware-updates.md).
