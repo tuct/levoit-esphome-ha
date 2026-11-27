@@ -93,12 +93,25 @@ them:
    uploader authenticates with the API key, and from then on the device
    requires it.
 
-The only condition is the Device Builder's version, `esphome_current` of
-2026.9.0 or newer; the device's own version does not matter, since step 1
-always installs a current build. No user input, no `allow_plaintext_upload`,
-no `old_key`. Should the encrypted upload in step 3 be refused all the same
+This is the sequence the ESPHome documentation prescribes
+([native OTA, encryption](https://esphome.io/components/ota/esphome/)):
+install once with the password on 2026.9.0 or newer and look for
+`Encryption: offered, plaintext accepted` in the upload log, then add
+`encryption:`, remove `password:` and install, which logs
+`Encryption: required`. The integration uses that first log line as the
+trigger: the rewrite in step 2 happens only when the upload output of step 1
+said the device offers encryption, read by `build_log.py` like the other
+lines. No version check, no user input, no `allow_plaintext_upload`, no
+`old_key`. Should the encrypted upload in step 3 be refused all the same
 ("Refusing to send the image in plaintext"), the refresh writes the password
 line back and reports it, so the next update is a password update again.
+
+Two dates from the documentation. The plaintext path that step 1 relies on
+is removed in ESPHome 2027.3.0: a device still on a password then cannot
+take a plain update any more, only the documented single install with
+`encryption:` plus `allow_plaintext_upload: true` next to the password, or a
+serial flash. The integration ships step 0 well before that, and keeps the
+single-install form as the fallback for a device that missed the window.
 
 The `<name>_ota_password` secret stays in `secrets.yaml`, unused: the
 integration never deletes a secret. The README says so, and that the config
