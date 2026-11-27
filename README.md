@@ -7,14 +7,14 @@
 **The Home Assistant integration for purifiers running the [tuct/levoit](https://github.com/tuct/levoit) firmware.**<br>
 Use them, run a room as one group, and update their firmware, all from Home Assistant.
 
-[![HACS custom repository](https://img.shields.io/badge/HACS-custom-41BDF5)](#install)
+[![HACS custom repository](https://img.shields.io/badge/HACS-custom-41BDF5)](#installation)
 [![Home Assistant 2026.11 or newer](https://img.shields.io/badge/Home%20Assistant-%E2%89%A5%202026.11-18BCF2?logo=homeassistant&logoColor=white)](#requirements)
 [![Release](https://img.shields.io/github/v/release/tuct/levoit-esphome-ha?label=release&color=0E8F8A)](https://github.com/tuct/levoit-esphome-ha/releases/latest)
 [![License](https://img.shields.io/github/license/tuct/levoit-esphome-ha?color=6B7A83)](./LICENSE)
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P4P721ETB5)
 
-[Features](#features) · [Install](#install) · [Requirements](#requirements) · [Supported models](#supported-models) · [Documentation](#documentation)
+[Features](#features) · [Installation](#installation) · [Requirements](#requirements) · [Supported models](#supported-models) · [Documentation](#documentation)
 
 </div>
 
@@ -82,7 +82,7 @@ after a restart.
 > **Early version.** Part of the
 > [firmware update plan](https://github.com/tuct/levoit/blob/main/docs/firmware-updates.md).
 
-## Install
+## Installation
 
 [![Open your Home Assistant instance and open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tuct&repository=levoit-esphome-ha&category=integration)
 
