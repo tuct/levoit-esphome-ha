@@ -32,7 +32,8 @@ from typing import Any
 
 from homeassistant.core import callback
 
-BUILD_LOG_LINES = 400  # kept per device, the newest
+BUILD_LOG_LINES = 2000  # kept per device: a first ESP-IDF build (~1,200 lines) fits whole
+BUILD_LOG_HEAD = 200  # of those, the first lines, kept even when a build runs longer
 BUILD_LOG_TAIL = 15  # sent to the panel with every snapshot, under the steps
 BUILD_LOG_IN_HA_LOG = 40  # copied into Home Assistant's log when a build fails
 BUILD_PUSH_INTERVAL = 1.0  # seconds between pushes of a running build to the panel
@@ -130,7 +131,11 @@ class BuildLog:
         """Initialize; `upload` adds the upload step, `on_line` hears every line."""
         self.upload = upload
         self._on_line = on_line
-        self._lines: deque[str] = deque(maxlen=BUILD_LOG_LINES)
+        # the first lines (setup, the config, ESP-IDF) and the newest; the middle
+        # of a build longer than BUILD_LOG_LINES is dropped and counted
+        self._head: list[str] = []
+        self._lines: deque[str] = deque(maxlen=BUILD_LOG_LINES - BUILD_LOG_HEAD)
+        self._skipped = 0
         self.steps: list[Step] = [Step(key) for key in STEPS if upload or key != STEP_UPLOAD]
         self._current: Step = self.steps[0]
         self._current.state = RUNNING
@@ -153,23 +158,30 @@ class BuildLog:
         parts = [part.rstrip() for part in text.split("\r") if part.strip()]
         for part in parts:
             self._read(part.strip())
-        self._lines.append(parts[-1] if parts else "")
+        kept = parts[-1] if parts else ""
+        if len(self._head) < BUILD_LOG_HEAD:
+            self._head.append(kept)
+        else:
+            if len(self._lines) == self._lines.maxlen:
+                self._skipped += 1
+            self._lines.append(kept)
         if self._on_line is not None:
             self._on_line()
 
     @property
     def lines(self) -> list[str]:
-        """The kept lines, oldest first."""
-        return list(self._lines)
+        """The kept lines, oldest first, with a marker where the middle was dropped."""
+        gap = [f"... {self._skipped} lines not kept ..."] if self._skipped else []
+        return [*self._head, *gap, *self._lines]
 
     @property
     def tail(self) -> list[str]:
         """The newest lines, for the panel."""
-        return list(self._lines)[-BUILD_LOG_TAIL:]
+        return [*self._head, *self._lines][-BUILD_LOG_TAIL:]
 
     def reason(self) -> str:
         """The last error line, else the last "failed" line, else the last line."""
-        lines = [line.strip() for line in self._lines if line.strip()]
+        lines = [line.strip() for line in (*self._head, *self._lines) if line.strip()]
         for pattern in _REASON_LINES:
             for line in reversed(lines):
                 if pattern.search(line):
