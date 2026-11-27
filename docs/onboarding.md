@@ -64,6 +64,41 @@ inherited encryption without an API key. New: the Device Builder has to be
 new enough for encrypted OTA; the wizard reads `esphome_current` from the
 snapshot and falls back to a password with a note when it is not.
 
+### Migrating devices that have an OTA password
+
+Every template device made so far has `password: !secret <name>_ota_password`
+and an API key. ESPHome's rules (2026.11, `espota2.py` and the `ota`
+component) make the move to encryption a normal update:
+
+- `password:` and `encryption:` cannot be combined in one `ota:` block.
+- A firmware built with ESPHome 2026.9.0 or newer that has an
+  `api: encryption: key` offers OTA encryption by itself, also when it was
+  built with `password:`; the uploader then authenticates over noise with
+  the API key and never needs the password.
+- Only a firmware older than 2026.9.0 does not offer it. ESPHome's advice for
+  that case is "install once without the `ota: encryption:` block, then
+  restore it", which is a plain password update with a current Device
+  Builder; the build it installs offers encryption from then on.
+
+So the template refresh switches a config from `password:` to `encryption:`
+(inheriting the API key) when all of these hold: the config is a template
+config with an API key, the device reports an ESPHome version of 2026.9.0 or
+newer (`esphome_deployed`, from its ESPHome device entry), and the Device
+Builder runs 2026.9.0 or newer (`esphome_current`). A device on an older
+firmware gets one more password update, which lifts it over the line, and
+switches at the next. No user input, no `allow_plaintext_upload`, no
+`old_key`. If the encrypted upload is refused all the same ("Refusing to
+send the image in plaintext"), the refresh writes the previous config back
+and reports it, so the next update is a password update again.
+
+The `<name>_ota_password` secret stays in `secrets.yaml`, unused: the
+integration never deletes a secret. The README says so, and that the config
+of a migrated device can be reverted by hand to the password line while the
+secret exists. Custom configs are never rewritten, as before.
+
+New configs from the config flow get `encryption:` at once, with the same
+Device Builder version check; this does not wait for the wizard.
+
 ## Flash: over the air where possible, USB where not
 
 Two cases, told apart by whether the ESP already runs ESPHome and answers on
@@ -128,6 +163,10 @@ their hardware hacks) are listed with a link to their folder and no wizard.
 
 ## Steps
 
+0. **Encrypted OTA first**: new configs get `encryption:`; the template
+   refresh migrates password devices by the rule above, with the write-back
+   on a refused upload. Tests for every row of the protection table and the
+   version gate. Independent of the wizard, so it ships on its own.
 1. **Extract**: `onboarding.py` and the WS commands, the config flow on top
    of it, no UI change. Tests moved and extended with the protection table.
 2. **The wizard, to the config**: steps 1 to 6 in the panel, plain screens,
@@ -141,7 +180,8 @@ their hardware hacks) are listed with a link to their folder and no wizard.
 5. **USB in the wizard** (optional): the firmware view and esp-web-tools,
    offered in a secure context.
 
-Each step is one PR; 1 to 3 make a release, 4 and 5 follow.
+Each step is one PR; 0 can release alone, 1 to 3 make a release, 4 and 5
+follow.
 
 ## Open
 
