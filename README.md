@@ -100,13 +100,20 @@ its percentage.
 
 ### Add a new purifier
 
-*Add device* walks you through it. Pick the model, with its photo and notes
-from [tuct/levoit](https://github.com/tuct/levoit). Choose how it gets its
-firmware: flash the original ESP, or add a Seeed XIAO ESP32-S3 / C3 or your
-own board. Give it a name, and it makes the config with its own keys and
-compiles it. You flash it once over USB from the Device Builder; after that,
+*Add device* walks you through it, one step at a time. Pick the model, with
+its photo and notes from [tuct/levoit](https://github.com/tuct/levoit), then
+the ESP: the original one, a Seeed XIAO ESP32-S3 / C3, or your own board.
+Give it a name and a channel, see exactly what gets written, and create the
+config with its own keys. It compiles right away, with the build's steps
+live; you flash it once over USB from the Device Builder, and after that,
 updates come over the air.
 [More](docs/updates.md#add-device)
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-1-model.png?v=0.8.1" width="720" alt="Which purifier: the models with a template, each with its photo, status, CADR, how easy it is to open and the ESPs it has a template for; below them the models with a guide but no template">
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-2-esp.png?v=0.8.1" width="720" alt="Which ESP for the Levoit Core 300S: original ESP, Seeed XIAO ESP32-S3, Seeed XIAO ESP32-C3, or Other ESP with your own board and pins">
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-7-compile.png?v=0.8.1" width="720" alt="Compile: Setup done with ESP-IDF 5.5.6, Compile running at 40 of 936 files with its bar, and the build output below">
 
 > **Early version.** Part of the
 > [firmware update plan](https://github.com/tuct/levoit/blob/main/docs/firmware-updates.md).

@@ -187,7 +187,33 @@ template are listed with a link to their guide. The guided page then carries on:
 * **Existing device:** **Install over the air** compiles and uploads it, as
   *Update* does, and ends on its device page
 
-<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-model.png" width="420" alt="Add device: pick the model">
+**1. Model**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-1-model.png?v=0.8.1" width="720" alt="Which purifier: the models with a template, each with its photo, status, CADR, how easy it is to open and the ESPs it has a template for; below them the models with a guide but no template">
+
+**2. ESP**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-2-esp.png?v=0.8.1" width="720" alt="Which ESP for the Levoit Core 300S: original ESP, Seeed XIAO ESP32-S3, Seeed XIAO ESP32-C3, or Other ESP with your own board and pins">
+
+**3. Device**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-3-device.png?v=0.8.1" width="720" alt="A new device with a new name and keys, or a device Home Assistant already knows">
+
+**4. Name**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-4-name.png?v=0.8.1" width="720" alt="Name and channel: the ESPHome name with its config file and hostname, and Stable or Main">
+
+**5. Protection**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-5-protection.png?v=0.8.1" width="720" alt="What gets written: a new API key in secrets.yaml, OTA encrypted with it, the shared Wi-Fi secrets, and the config from the model's builder file">
+
+**6. Create**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-6-create.png?v=0.8.1" width="720" alt="Create the config: model, ESP, name and channel, then Create config">
+
+**7. Compile**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-7-compile.png?v=0.8.1" width="720" alt="Compile: Setup done with ESP-IDF 5.5.6, Compile running at 40 of 936 files with its bar, and the build output below">
 
 * **New device:** a name is suggested; a new API encryption key is
   generated and stored in the Device Builder's `secrets.yaml` as
