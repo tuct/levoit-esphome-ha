@@ -217,6 +217,10 @@ template are listed with a link to their guide. The guided page then carries on:
 
 <img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-7-compiled.png?v=0.8.1" width="720" alt="Compiled: Setup with ESP-IDF 5.5.6, Compile with 955 files, Link and image with a 962 KB image, Result with RAM 33.0 % and Flash 53.7 %, and Successfully compiled program at the end of the output">
 
+**8. Flash**
+
+<img src="https://raw.githubusercontent.com/tuct/levoit-esphome-ha/main/images/add-device-8-flash.png?v=0.8.1" width="720" alt="Flash it over USB: connect the ESP with a USB data cable, open the Device Builder, choose Install and Plug into this computer, then put the ESP back; the page looks for levoit-core300s-c3-two.local and goes on by itself">
+
 * **New device:** a name is suggested; a new API encryption key is
   generated and stored in the Device Builder's `secrets.yaml` as
   `<name>_api_key`, and OTA updates are encrypted with it (a Device Builder
