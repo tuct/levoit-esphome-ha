@@ -80,16 +80,25 @@ component) make the move to encryption a normal update:
   restore it", which is a plain password update with a current Device
   Builder; the build it installs offers encryption from then on.
 
-So the template refresh switches a config from `password:` to `encryption:`
-(inheriting the API key) when all of these hold: the config is a template
-config with an API key, the device reports an ESPHome version of 2026.9.0 or
-newer (`esphome_deployed`, from its ESPHome device entry), and the Device
-Builder runs 2026.9.0 or newer (`esphome_current`). A device on an older
-firmware gets one more password update, which lifts it over the line, and
-switches at the next. No user input, no `allow_plaintext_upload`, no
-`old_key`. If the encrypted upload is refused all the same ("Refusing to
-send the image in plaintext"), the refresh writes the previous config back
-and reports it, so the next update is a password update again.
+So the migration is two updates, and the integration does the step between
+them:
+
+1. The next update of a template device with `password:` runs as today: the
+   refresh keeps the password, the build is installed with it. Built by a
+   Device Builder of 2026.9.0 or newer, that firmware offers encryption.
+2. Right after that upload succeeds, the integration rewrites the config to
+   `encryption:` (inheriting the API key) in place of the password line, a
+   text change, no build. The device row says so.
+3. The next update uses encryption: the refresh keeps `encryption:`, the
+   uploader authenticates with the API key, and from then on the device
+   requires it.
+
+The only condition is the Device Builder's version, `esphome_current` of
+2026.9.0 or newer; the device's own version does not matter, since step 1
+always installs a current build. No user input, no `allow_plaintext_upload`,
+no `old_key`. Should the encrypted upload in step 3 be refused all the same
+("Refusing to send the image in plaintext"), the refresh writes the password
+line back and reports it, so the next update is a password update again.
 
 The `<name>_ota_password` secret stays in `secrets.yaml`, unused: the
 integration never deletes a secret. The README says so, and that the config
@@ -163,10 +172,11 @@ their hardware hacks) are listed with a link to their folder and no wizard.
 
 ## Steps
 
-0. **Encrypted OTA first**: new configs get `encryption:`; the template
-   refresh migrates password devices by the rule above, with the write-back
-   on a refused upload. Tests for every row of the protection table and the
-   version gate. Independent of the wizard, so it ships on its own.
+0. **Encrypted OTA first**: new configs get `encryption:`; password devices
+   migrate over two updates, the config rewritten after the first upload,
+   with the write-back on a refused upload. Tests for every row of the
+   protection table and the Device Builder version gate. Independent of the
+   wizard, so it ships on its own.
 1. **Extract**: `onboarding.py` and the WS commands, the config flow on top
    of it, no UI change. Tests moved and extended with the protection table.
 2. **The wizard, to the config**: steps 1 to 6 in the panel, plain screens,
